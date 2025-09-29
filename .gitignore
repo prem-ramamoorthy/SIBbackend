@@ -1,0 +1,76 @@
+# Dependencies
+node_modules/
+pnpm-lock.yaml
+yarn.lock
+
+# Env and secrets
+.env
+.env.*.local
+*.env.local
+
+# Logs and diagnostics
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Runtime data
+pids/
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage and test outputs
+coverage/
+.nyc_output/
+.junit/
+
+# Build outputs
+dist/
+build/
+.tmp/
+temp/
+.cache/
+
+# TypeScript
+*.tsbuildinfo
+tsconfig.tsbuildinfo
+
+# Editors/OS
+.DS_Store
+Thumbs.db
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+.idea/
+*.iml
+
+# Optional package managers
+.bun/
+bun.lockb
+
+# PM2 / process managers
+*.log.*
+
+# Next.js/React/Vite (monorepo-friendly)
+.next/
+out/
+.vite/
+vite.config.ts.timestamp-*
+vite.config.js.timestamp-*
+
+# ESLint/Prettier caches
+.eslintcache
+.prettiercache
+
+# Docker
+docker-data/
+*.pid
+
+# Misc
+coverage-final.json
