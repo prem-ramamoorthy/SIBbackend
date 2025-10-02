@@ -20,6 +20,9 @@ app.use(
 );
 
 app.use("/auth", authRoutes);
+app.get('/', (req, res) => {
+	res.status(200).sendFile(__dirname + '/index.html')
+})
 
 const PORT = process.env.PORT || 4000;
 app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
