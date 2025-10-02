@@ -13,13 +13,17 @@ app.use(morgan("dev"));
 app.use(express.json());
 app.use(cookieParser());
 app.use(
-  cors({
-    origin: "http://localhost:3000", // your frontend URL
-    credentials: true,              // allow cookies
-  })
+	cors({
+		origin: "http://localhost:3000", // your frontend URL
+		credentials: true,              // allow cookies
+	})
 );
 
 app.use("/auth", authRoutes);
+
+app.get('/', (req, res) => {
+	return res.send({message : "Hi !! , from the server"})
+})
 
 const PORT = process.env.PORT || 4000;
 app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
