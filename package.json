@@ -16,17 +16,24 @@
   "license": "ISC",
   "author": "Prem kumar Ramamoorthy",
   "type": "commonjs",
-  "main": "index.mjs",
+  "main": "app.mjs",
   "scripts": {
-    "start": "node index.mjs",
-    "dev": "nodemon index.mjs",
+    "start": "node app.mjs",
+    "dev": "nodemon app.mjs",
     "test": "echo \"No tests\" && exit 0"
   },
   "devDependencies": {
     "nodemon": "^3.1.10"
   },
   "dependencies": {
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.3",
     "express": "^5.1.0",
+    "express-session": "^1.18.2",
+    "express-validator": "^7.2.1",
+    "firebase": "^12.3.0",
+    "firebase-admin": "^13.5.0",
     "morgan": "^1.10.1"
   }
 }
