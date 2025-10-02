@@ -4,6 +4,11 @@ import cors from "cors";
 import dotenv from "dotenv";
 import morgan from "morgan";
 import authRoutes from "./Auth/routes.mjs";
+import path from "path";
+import { fileURLToPath } from "url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 dotenv.config();
 
@@ -20,9 +25,9 @@ app.use(
 );
 
 app.use("/auth", authRoutes);
-app.get('/', (req, res) => {
-	res.status(200).sendFile(__dirname + '/index.html')
-})
+app.get("/", (req, res) => {
+	res.status(200).sendFile(path.join(__dirname, "index.html"));
+});
 
 const PORT = process.env.PORT || 4000;
 app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
