@@ -80,6 +80,7 @@ router.post("/refreshSession", authenticateUser, async (req, res) => {
       httpOnly: true,
       secure: true,
       sameSite: "none",
+      domain: ".vercel.app",
     });
     res.json({ message: "Session refreshed" });
   } catch (error) {
