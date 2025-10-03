@@ -19,7 +19,7 @@ app.use(express.json());
 app.use(cookieParser());
 app.use(
 	cors({
-		origin: "https://si-bapp.vercel.app",
+		origin: process.env.LINK,
 		credentials: true,
 	})
 );
