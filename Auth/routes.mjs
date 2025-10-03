@@ -32,8 +32,8 @@ router.post("/sessionLogin", loginValidator, handleValidation, async (req, res) 
     res.cookie("session", sessionCookie, {
       maxAge: expiresIn,
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
+      secure: true,
+      sameSite: "none",
     });
     res.json({ message: "Session created" });
   } catch (error) {
@@ -79,7 +79,7 @@ router.post("/refreshSession", authenticateUser, async (req, res) => {
       maxAge: expiresIn,
       httpOnly: true,
       secure: true,
-      sameSite: "strict",
+      sameSite: "none",
     });
     res.json({ message: "Session refreshed" });
   } catch (error) {
