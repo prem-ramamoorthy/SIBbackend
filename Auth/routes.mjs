@@ -8,6 +8,7 @@ import {
   resetPasswordValidator,
   deleteAccountValidator,
 } from "./validator.mjs";
+import transporter from "./transporter.mjs";
 
 const router = express.Router();
 
@@ -65,7 +66,20 @@ router.post("/resetPassword", resetPasswordValidator, handleValidation, async (r
   const { email } = req.body;
   try {
     const link = await admin.auth().generatePasswordResetLink(email);
-    res.json({ message: "Password reset link generated", link });
+    await transporter.sendMail({
+      from: '"SIB - Sengundhar in Business" <kairospredict@gmail.com>',
+      to: email,
+      subject: "Password Reset Request",
+      html: `
+        <p>Click the link to reset your password:</p>
+        <a href="${link}">${link}</a>
+        <p>If you didn’t ask to reset the password, you can ignore this email.</p>
+        <p>Thanks,</p>
+        <p>SIB - Sengundhar in Business</p>
+      `
+    });
+
+    res.json({ message: "Password reset email sent successfully" });
   } catch (error) {
     res.status(400).json({ error: error.message });
   }
