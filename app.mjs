@@ -7,10 +7,10 @@ import authRoutes from "./Auth/routes.mjs";
 import path from "path";
 import { fileURLToPath } from "url";
 
+dotenv.config();
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-
-dotenv.config();
 
 const app = express();
 
@@ -18,15 +18,16 @@ app.use(morgan("dev"));
 app.use(express.json());
 app.use(cookieParser());
 app.use(
-	cors({
-		origin: process.env.LINK,
-		credentials: true,
-	})
+  cors({
+    origin: process.env.LINK,
+    credentials: true,
+  })
 );
 
 app.use("/auth", authRoutes);
+
 app.get("/", (req, res) => {
-	res.status(200).sendFile(path.join(__dirname, "index.html"));
+  res.status(200).sendFile(path.join(__dirname, "index.html"));
 });
 
 const PORT = process.env.PORT || 4000;
