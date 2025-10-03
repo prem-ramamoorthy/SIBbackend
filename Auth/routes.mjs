@@ -23,17 +23,21 @@ router.post("/signup", signupValidator, handleValidation, async (req, res) => {
 
 router.post("/sessionLogin", loginValidator, handleValidation, async (req, res) => {
   const idToken = req.body.idToken?.toString();
-  const expiresIn = parseInt(process.env.SESSION_EXPIRY);
+  const expiresIn = parseInt(process.env.SESSION_EXPIRY) || 60 * 60 * 24 * 5 * 1000;
+  if (!idToken) {
+    return res.status(400).json({ error: "Missing ID token" });
+  }
   try {
     const sessionCookie = await admin.auth().createSessionCookie(idToken, { expiresIn });
     res.cookie("session", sessionCookie, {
       maxAge: expiresIn,
       httpOnly: true,
-      secure: true,
+      secure: process.env.NODE_ENV === "production",
       sameSite: "strict",
     });
     res.json({ message: "Session created" });
   } catch (error) {
+    console.error("Error creating session cookie:", error);
     res.status(401).json({ error: "Invalid token" });
   }
 });
