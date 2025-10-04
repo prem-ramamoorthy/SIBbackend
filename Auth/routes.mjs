@@ -7,6 +7,7 @@ import {
   updateProfileValidator,
   resetPasswordValidator,
   deleteAccountValidator,
+  updatePasswordValidator,
 } from "./validator.mjs";
 import transporter from "./transporter.mjs";
 
@@ -107,6 +108,28 @@ router.delete("/deleteAccount", authenticateUser, deleteAccountValidator, handle
     await admin.auth().deleteUser(req.user.uid);
     res.clearCookie("session");
     res.json({ message: "User deleted" });
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+router.post("/updatePassword", updatePasswordValidator, handleValidation, async (req, res) => {
+  const { email, oldPassword, newPassword } = req.body;
+  try {
+    const response = await fetch("https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=" + process.env.FIREBASE_API_KEY, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password: oldPassword, returnSecureToken: true }),
+    });
+
+    const data = await response.json();
+    console.log(data)
+    if (!data.idToken) {
+      return res.status(401).json({ error: "Old password is incorrect" });
+    }
+    const user = await admin.auth().getUserByEmail(email);
+    await admin.auth().updateUser(user.uid, { password: newPassword });
+    res.json({ message: "Password updated successfully" });
   } catch (error) {
     res.status(400).json({ error: error.message });
   }

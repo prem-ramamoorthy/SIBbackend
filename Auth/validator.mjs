@@ -48,3 +48,24 @@ export const deleteAccountValidator = [
   body("confirm")
     .equals("DELETE").withMessage("You must type 'DELETE' to confirm account deletion"),
 ];
+
+export const updatePasswordValidator = [
+  body("email")
+    .isEmail().withMessage("A valid email is required")
+    .normalizeEmail(),
+  body("oldPassword")
+    .isLength({ min: 8 }).withMessage("Old password must be at least 8 characters"),
+  body("newPassword")
+    .isLength({ min: 8 }).withMessage("New password must be at least 8 characters")
+    .matches(/[A-Z]/).withMessage("New password must contain at least one uppercase letter")
+    .matches(/[a-z]/).withMessage("New password must contain at least one lowercase letter")
+    .matches(/\d/).withMessage("New password must contain at least one digit")
+    .matches(/[@$!%*?&#]/).withMessage("New password must contain at least one special character"),
+  body("confirmNewPassword")
+    .custom((value, { req }) => {
+      if (value !== req.body.newPassword) {
+        throw new Error("Confirm password does not match new password");
+      }
+      return true;
+    }),
+];
