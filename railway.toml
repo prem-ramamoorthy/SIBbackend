@@ -1,0 +1,26 @@
+[build]
+builder = "nixpacks"
+
+[build.nixpacksPlan.phases.setup]
+nixPkgs = ["nodejs_18", "nodejs_20", "nodejs_22"]
+
+[build.nixpacksPlan.phases.install]
+cmds = [
+  "npm install",
+  "npm ci"
+]
+
+[build.nixpacksPlan.phases.build]
+cmds = ["npm run build --if-present"]
+
+[build.nixpacksPlan.phases.test]
+cmds = ["npm test"]
+
+[deploy]
+startCommand = "npm start"
+
+[cache]
+paths = ["node_modules"]
+
+[environments.production.deploy]
+numReplicas = 1
