@@ -6,6 +6,9 @@ import morgan from "morgan";
 import authRoutes from "./Auth/routes.mjs";
 import path from "path";
 import { fileURLToPath } from "url";
+import connectDB from "./mongo_connection.mjs";
+
+connectDB() ;
 
 dotenv.config();
 

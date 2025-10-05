@@ -10,6 +10,7 @@ import {
   updatePasswordValidator,
 } from "./validator.mjs";
 import transporter from "./transporter.mjs";
+import User from './UserSchema.mjs'
 
 const router = express.Router();
 
@@ -17,7 +18,9 @@ router.post("/signup", signupValidator, handleValidation, async (req, res) => {
   const { email, password, displayName } = req.body;
   try {
     const user = await admin.auth().createUser({ email, password, displayName });
-    res.status(201).json({ message: "User created", uid: user.uid });
+    const newUser = new User({ userid : user.uid , usermail : user.email , displayname: user.displayName });
+    await newUser.save();
+    res.status(201).json({ message: "User created", uid: newUser._id });
   } catch (error) {
     res.status(400).json({ error: error.message });
   }
@@ -123,7 +126,6 @@ router.post("/updatePassword", updatePasswordValidator, handleValidation, async 
     });
 
     const data = await response.json();
-    console.log(data)
     if (!data.idToken) {
       return res.status(401).json({ error: "Old password is incorrect" });
     }
