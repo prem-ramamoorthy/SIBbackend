@@ -10,7 +10,7 @@ import {
   updatePasswordValidator,
 } from "./validator.mjs";
 import transporter from "./transporter.mjs";
-import User from '../Schemas.mjs'
+import User from './Schemas.mjs'
 
 const router = express.Router();
 
@@ -68,7 +68,7 @@ router.put("/updateProfile", authenticateUser, updateProfileValidator, handleVal
   }
 });
 
-router.post("/resetPassword", resetPasswordValidator, handleValidation, async (req, res) => {
+router.post("/resetPassword", resetPasswordValidator, handleValidation,authenticateUser,async (req, res) => {
   const { email } = req.body;
   try {
     const link = await admin.auth().generatePasswordResetLink(email);

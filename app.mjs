@@ -7,6 +7,7 @@ import authRoutes from "./Auth/routes.mjs";
 import path from "path";
 import { fileURLToPath } from "url";
 import connectDB from "./mongo_connection.mjs";
+import AdminRouter from './src/Admin/AdminRoute.mjs'
 
 connectDB() ;
 
@@ -28,6 +29,7 @@ app.use(
 );
 
 app.use("/auth", authRoutes);
+app.use('/admin', AdminRouter);
 
 app.get("/", (req, res) => {
   res.status(200).sendFile(path.join(__dirname, "index.html"));
