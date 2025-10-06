@@ -1,8 +1,7 @@
 import express from 'express';
 import { Vertical } from '../AdminSchemas.mjs';
 import { createVerticalValidation, updateVerticalValidation, idValidation } from './validation.mjs';
-import { handleValidationErrors ,  authenticateCookie  } from '../middlewares.mjs';
-
+import { handleValidationErrors ,  authenticateCookie  } from '../../middlewares.mjs';
 const router = express.Router();
 
 router.post('/createvertical', createVerticalValidation, handleValidationErrors ,  authenticateCookie, async (req, res) => {

@@ -1,7 +1,7 @@
 import express from 'express';
 import { Region } from '../AdminSchemas.mjs';
 import { regionValidators } from './validator.mjs';
-import { handleValidationErrors ,  authenticateCookie  } from '../middlewares.mjs';
+import { handleValidationErrors ,  authenticateCookie  } from '../../middlewares.mjs';
 
 const router = express.Router();
 

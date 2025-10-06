@@ -1,4 +1,4 @@
-import admin from "../../Auth/firebase.mjs";
+import admin from "../Auth/firebase.mjs";
 import { validationResult } from 'express-validator';
 
 export const authenticateCookie = async (req, res, next) => {
