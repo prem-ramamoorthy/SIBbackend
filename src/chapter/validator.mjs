@@ -55,3 +55,36 @@ export const updateMembershipValidation = [
   body('termination_date').optional().isISO8601().toDate(),
   body('termination_reason').optional().isString()
 ];
+
+export const createSummaryValidation = [
+  body('chapter_name').isString().notEmpty(),
+  body('period_year').isInt({ min: 1900 }).notEmpty(),
+  body('period_month').isInt({ min: 1, max: 12 }).notEmpty(),
+  body('total_members').isInt({ min: 0 }).notEmpty(),
+  body('active_members').isInt({ min: 0 }).notEmpty(),
+  body('total_referrals').isInt({ min: 0 }).notEmpty(),
+  body('total_business').isDecimal().notEmpty(),
+  body('meetings_held').isInt({ min: 0 }).notEmpty(),
+  body('average_attendance').isDecimal().notEmpty(),
+  body('visitors_total').isInt({ min: 0 }).notEmpty(),
+  body('new_members_joined').isInt({ min: 0 }).notEmpty(),
+  body('members_terminated').isInt({ min: 0 }).notEmpty(),
+  body('one_to_ones_total').isInt({ min: 0 }).notEmpty()
+];
+
+export const updateSummaryValidation = [
+  param('id').isMongoId(),
+  body('chapter_name').optional().isString(),
+  body('period_year').optional().isInt({ min: 1900 }),
+  body('period_month').optional().isInt({ min: 1, max: 12 }),
+  body('total_members').optional().isInt({ min: 0 }),
+  body('active_members').optional().isInt({ min: 0 }),
+  body('total_referrals').optional().isInt({ min: 0 }),
+  body('total_business').optional().isDecimal(),
+  body('meetings_held').optional().isInt({ min: 0 }),
+  body('average_attendance').optional().isDecimal(),
+  body('visitors_total').optional().isInt({ min: 0 }),
+  body('new_members_joined').optional().isInt({ min: 0 }),
+  body('members_terminated').optional().isInt({ min: 0 }),
+  body('one_to_ones_total').optional().isInt({ min: 0 })
+];
