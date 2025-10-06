@@ -20,7 +20,11 @@ const regionSchema = new mongoose.Schema({
     type: Date,
     required: true,
   },
-});
+},
+{
+  timestamps : true 
+}
+);
 
 export const Region = mongoose.model('Region', regionSchema);
 
@@ -43,6 +47,10 @@ const verticalSchema = new mongoose.Schema({
     type: Date,
     required: true,
   },
-});
+},
+{
+  timestamps : true 
+}
+);
 
 export const Vertical = mongoose.model('Vertical', verticalSchema);

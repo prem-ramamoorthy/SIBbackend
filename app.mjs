@@ -8,7 +8,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 import connectDB from "./mongo_connection.mjs";
 import AdminRouter from './src/Admin/AdminRoute.mjs'
-import ChapterRouter from "./src/chapter/chapterRoute.mjs";
+import ChapterRouter from "./src/chapter/MainRoute.mjs";
 import ProfileRouter from "./src/profile/profileRoute.mjs";
 
 connectDB() ;

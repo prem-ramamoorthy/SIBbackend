@@ -32,3 +32,26 @@ export const updateChapterValidation = [
 export const idValidation = [
   param('id').isMongoId()
 ];
+
+export const createMembershipValidation = [
+  body('username').isString().notEmpty(),
+  body('chapter_name').isString().notEmpty(),
+  body('role').isString().isLength({ max: 50 }).notEmpty(),
+  body('membership_status').isBoolean().notEmpty(),
+  body('join_date').isISO8601().toDate().notEmpty(),
+  body('renewal_date').isISO8601().toDate().notEmpty(),
+  body('termination_date').optional().isISO8601().toDate(),
+  body('termination_reason').optional().isString()
+];
+
+export const updateMembershipValidation = [
+  param('id').isMongoId(),
+  body('username').optional().isString(),
+  body('chapter_name').optional().isString(),
+  body('role').optional().isString().isLength({ max: 50 }),
+  body('membership_status').optional().isBoolean(),
+  body('join_date').optional().isISO8601().toDate(),
+  body('renewal_date').optional().isISO8601().toDate(),
+  body('termination_date').optional().isISO8601().toDate(),
+  body('termination_reason').optional().isString()
+];
