@@ -1,0 +1,70 @@
+import { body, param } from 'express-validator';
+
+export const idValidation = [
+  param('id').isMongoId().withMessage('Invalid profile id')
+];
+
+export const createProfileValidation = [
+  body('display_name').isString().isLength({ max: 50 }).notEmpty(),
+  body('username').isString().notEmpty(),
+  body('profile_image_url').optional().isURL(),
+  body('company_phone').isString().isLength({ max: 20 }).notEmpty(),
+  body('company_email').isEmail().isLength({ max: 100 }).notEmpty(),
+  body('company_address').isString().notEmpty(),
+  body('personal_address').isString().notEmpty(),
+  body('dob').isISO8601().toDate().notEmpty(),
+  body('wedding_date').isISO8601().toDate().notEmpty(),
+  body('blood_group').isIn(['A+','A-','B+','B-','AB+','AB-','O+','O-']).notEmpty(),
+  body('vagai_category').isString().isLength({ max: 100 }).notEmpty(),
+  body('kulam_category').isString().isLength({ max: 100 }).notEmpty(),
+  body('native_place').isString().isLength({ max: 100 }).notEmpty(),
+  body('kuladeivam').isString().isLength({ max: 100 }).notEmpty(),
+  body('company_name').isString().isLength({ max: 100 }).notEmpty(),
+  body('vertical_name').isString().notEmpty(),
+  body('gst_number').isString().isLength({ max: 20 }).notEmpty(),
+  body('years_in_business').isInt({ min: 0 }).notEmpty(),
+  body('annual_turnover').isInt({ min: 0 }).notEmpty(),
+  body('website').isURL().isLength({ max: 255 }).notEmpty(),
+  body('services_offered').isString().notEmpty(),
+  body('ideal_referral').isString().notEmpty(),
+  body('gains_goals').isString().notEmpty(),
+  body('gains_accomplishments').isString().notEmpty(),
+  body('gains_interests').isString().notEmpty(),
+  body('gains_networks').isString().notEmpty(),
+  body('gains_skills').isString().notEmpty(),
+  body('elevator_pitch_30s').isString().notEmpty(),
+  body('why_sib').isString().notEmpty()
+];
+
+export const updateProfileValidation = [
+  param('id').isMongoId(),
+  body('display_name').optional().isString().isLength({ max: 50 }),
+  body('username').optional().isString(),
+  body('profile_image_url').optional().isURL(),
+  body('company_phone').optional().isString().isLength({ max: 20 }),
+  body('company_email').optional().isEmail().isLength({ max: 100 }),
+  body('company_address').optional().isString(),
+  body('personal_address').optional().isString(),
+  body('dob').optional().isISO8601().toDate(),
+  body('wedding_date').optional().isISO8601().toDate(),
+  body('blood_group').optional().isIn(['A+','A-','B+','B-','AB+','AB-','O+','O-']),
+  body('vagai_category').optional().isString().isLength({ max: 100 }),
+  body('kulam_category').optional().isString().isLength({ max: 100 }),
+  body('native_place').optional().isString().isLength({ max: 100 }),
+  body('kuladeivam').optional().isString().isLength({ max: 100 }),
+  body('company_name').optional().isString().isLength({ max: 100 }),
+  body('vertical_name').optional().isString(),
+  body('gst_number').optional().isString().isLength({ max: 20 }),
+  body('years_in_business').optional().isInt({ min: 0 }),
+  body('annual_turnover').optional().isInt({ min: 0 }),
+  body('website').optional().isURL().isLength({ max: 255 }),
+  body('services_offered').optional().isString(),
+  body('ideal_referral').optional().isString(),
+  body('gains_goals').optional().isString(),
+  body('gains_accomplishments').optional().isString(),
+  body('gains_interests').optional().isString(),
+  body('gains_networks').optional().isString(),
+  body('gains_skills').optional().isString(),
+  body('elevator_pitch_30s').optional().isString(),
+  body('why_sib').optional().isString()
+];

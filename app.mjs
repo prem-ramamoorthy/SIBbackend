@@ -9,6 +9,7 @@ import { fileURLToPath } from "url";
 import connectDB from "./mongo_connection.mjs";
 import AdminRouter from './src/Admin/AdminRoute.mjs'
 import ChapterRouter from "./src/chapter/chapterRoute.mjs";
+import ProfileRouter from "./src/profile/profileRoute.mjs";
 
 connectDB() ;
 
@@ -32,6 +33,7 @@ app.use(
 app.use("/auth", authRoutes);
 app.use('/admin', AdminRouter);
 app.use('/chapter' , ChapterRouter)
+app.use('/profile', ProfileRouter)
 
 app.get("/", (req, res) => {
   res.status(200).sendFile(path.join(__dirname, "index.html"));
