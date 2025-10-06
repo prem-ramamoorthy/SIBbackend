@@ -10,21 +10,23 @@ import {
   updatePasswordValidator,
 } from "./validator.mjs";
 import transporter from "./transporter.mjs";
-import User from './UserSchema.mjs'
+import User from '../Schemas.mjs'
 
 const router = express.Router();
 
 router.post("/signup", signupValidator, handleValidation, async (req, res) => {
-  const { email, password, displayName } = req.body;
+  const { username, email, phone_number, status, date_joined, password } = req.body;
+  const dateJoined = req.body.date_joined ? new Date(req.body.date_joined) : new Date();
   try {
-    const user = await admin.auth().createUser({ email, password, displayName });
-    const newUser = new User({ userid : user.uid , usermail : user.email , displayname: user.displayName });
+    const user = await admin.auth().createUser({ email, password, username });
+    const newUser = new User({ user_id: user.uid, email, username, phone_number, status, date_joined : dateJoined });
     await newUser.save();
-    res.status(201).json({ message: "User created", uid: newUser._id });
+    return res.status(201).json({ message: "User created", uid: newUser._id });
   } catch (error) {
-    res.status(400).json({ error: error.message });
+    return res.status(400).json({ error: error.message });
   }
 });
+
 
 router.post("/sessionLogin", loginValidator, handleValidation, async (req, res) => {
   const idToken = req.body.idToken?.toString();
