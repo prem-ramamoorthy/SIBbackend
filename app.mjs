@@ -13,6 +13,7 @@ import ProfileRouter from "./src/profile/profileRoute.mjs";
 import MeetingRouter from "./src/meetings/meetingRoute.mjs";
 import slipsRouter from "./src/slips/slipsRoute.mjs";
 import MemberRouter from "./src/members/memberRoute.mjs";
+import EventRouter from "./src/events/eventRoute.mjs";
 
 connectDB() ;
 
@@ -40,6 +41,7 @@ app.use('/profile', ProfileRouter)
 app.use('/meeting', MeetingRouter)
 app.use('/slips',slipsRouter)
 app.use('/member' , MemberRouter)
+app.use('/event', EventRouter)
 
 app.get("/", (req, res) => {
   res.status(200).sendFile(path.join(__dirname, "index.html"));
