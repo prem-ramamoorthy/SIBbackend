@@ -106,6 +106,26 @@ export async function mapNamesToIds(req, res, next) {
       req.body.referee_id = user._id;
       delete req.body.referee_username;
     }
+    if (typeof req.body.member_username === 'string' && req.body.member_username.trim()) {
+      const user = await User.findOne({ username: req.body.member_username }).select('_id');
+      if (!user) {
+        return res.status(400).json({
+          errors: [{ type: 'field', path: 'username', msg: 'User not found by username' }]
+        });
+      }
+      req.body.member_user_id = user._id;
+      delete req.body.member_username;
+    }
+    if (typeof req.body.inviting_member_display_name === 'string' && req.body.inviting_member_display_name.trim()) {
+      const member = await MemberProfile.findOne({ display_name: req.body.inviting_member_display_name }).select('_id');
+      if (!member) {
+        return res.status(400).json({
+          errors: [{ type: 'field', path: 'inviting_member_display_name', msg: 'Inviting member not found by display name' }]
+        });
+      }
+      req.body.inviting_member_id = member._id;
+      delete req.body.inviting_member_display_name;
+    }
     next();
   } catch (e) {
     res.status(500).json({ error: e.message });

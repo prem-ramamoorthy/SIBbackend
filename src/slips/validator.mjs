@@ -69,3 +69,32 @@ export const updateReferralValidation = [
   body('referral_status').optional().isString().isLength({ max: 20 }),
   body('created_at').optional().isISO8601().toDate()
 ];
+
+export const createVisitorValidation = [
+  body('inviting_member_display_name').isString().notEmpty(),
+  body('visitor_name').isString().isLength({ max: 100 }).notEmpty(),
+  body('visitor_company').isString().isLength({ max: 100 }).notEmpty(),
+  body('visitor_phone').isString().isLength({ max: 20 }).notEmpty(),
+  body('visitor_email').isString().isLength({ max: 100 }).notEmpty(),
+  body('business_category').isString().isLength({ max: 100 }).notEmpty(),
+  body('industry').isString().isLength({ max: 100 }).notEmpty(),
+  body('presentation_given').isBoolean().notEmpty(),
+  body('follow_up_notes').optional().isString(),
+  body('converted_to_member').isBoolean().notEmpty(),
+  body('member_username').optional().isString()
+];
+
+export const updateVisitorValidation = [
+  param('id').isMongoId(),
+  body('inviting_member_display_name').optional().isString(),
+  body('visitor_name').optional().isString().isLength({ max: 100 }),
+  body('visitor_company').optional().isString().isLength({ max: 100 }),
+  body('visitor_phone').optional().isString().isLength({ max: 20 }),
+  body('visitor_email').optional().isString().isLength({ max: 100 }),
+  body('business_category').optional().isString().isLength({ max: 100 }),
+  body('industry').optional().isString().isLength({ max: 100 }),
+  body('presentation_given').optional().isBoolean(),
+  body('follow_up_notes').optional().isString(),
+  body('converted_to_member').optional().isBoolean(),
+  body('member_username').optional().isString()
+];

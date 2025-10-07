@@ -167,3 +167,72 @@ const referralSchema = new Schema({
 referralSchema.index({ referral_code: 1 }, { unique: true });
 
 export const Referral = mongoose.model('referrals', referralSchema);
+
+const visitorSchema = new Schema({
+  inviting_member_id: {
+    type: Types.ObjectId,
+    ref: 'profiles',
+    required: true,
+    index: true
+  },
+  visitor_name: {
+    type: String,
+    required: true,
+    trim: true,
+    maxLength: 100
+  },
+  visitor_company: {
+    type: String,
+    required: true,
+    trim: true,
+    maxLength: 100
+  },
+  visitor_phone: {
+    type: String,
+    required: true,
+    trim: true,
+    maxLength: 20
+  },
+  visitor_email: {
+    type: String,
+    required: true,
+    trim: true,
+    maxLength: 100
+  },
+  business_category: {
+    type: String,
+    required: true,
+    trim: true,
+    maxLength: 100
+  },
+  industry: {
+    type: String,
+    required: true,
+    trim: true,
+    maxLength: 100
+  },
+  presentation_given: {
+    type: Boolean,
+    required: true
+  },
+  follow_up_notes: {
+    type: String,
+    trim: true
+  },
+  converted_to_member: {
+    type: Boolean,
+    required: true
+  },
+  member_user_id: {
+    type: Types.ObjectId,
+    ref: 'users',
+    default: null
+  }
+}, {
+  timestamps: true
+});
+
+visitorSchema.index({ inviting_member_id: 1, visitor_email: 1 });
+
+export const Visitor = mongoose.model('visitors', visitorSchema);
+
