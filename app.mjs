@@ -11,6 +11,7 @@ import AdminRouter from './src/Admin/AdminRoute.mjs'
 import ChapterRouter from "./src/chapter/MainRoute.mjs";
 import ProfileRouter from "./src/profile/profileRoute.mjs";
 import MeetingRouter from "./src/meetings/meetingRoute.mjs";
+import slipsRouter from "./src/slips/slipsRoute.mjs";
 
 connectDB() ;
 
@@ -36,6 +37,7 @@ app.use('/admin', AdminRouter);
 app.use('/chapter' , ChapterRouter)
 app.use('/profile', ProfileRouter)
 app.use('/meeting', MeetingRouter)
+app.use('/slips',slipsRouter)
 
 app.get("/", (req, res) => {
   res.status(200).sendFile(path.join(__dirname, "index.html"));

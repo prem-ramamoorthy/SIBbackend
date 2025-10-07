@@ -6,7 +6,7 @@ import {
   createMeetingValidation,
   updateMeetingValidation
 } from './validator.mjs';
-import { handleValidationErrors , authenticateCookie , mapChapterNamesToIds } from '../middlewares.mjs';
+import { handleValidationErrors , authenticateCookie , mapNamesToIds } from '../middlewares.mjs';
 
 const router = express.Router();
 
@@ -14,7 +14,7 @@ router.post(
   '/createmeeting',
   createMeetingValidation,
   handleValidationErrors,
-  mapChapterNamesToIds,
+  mapNamesToIds,
   authenticateCookie ,
   async (req, res) => {
     try {
@@ -112,7 +112,7 @@ router.put(
   authenticateCookie ,
   updateMeetingValidation,
   handleValidationErrors,
-  mapChapterNamesToIds,
+  mapNamesToIds,
   async (req, res) => {
     try {
       const updated = await Meeting.findByIdAndUpdate(

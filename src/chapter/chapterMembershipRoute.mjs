@@ -1,6 +1,6 @@
 import express from 'express';
 import { Membership} from './ChapterSchema.mjs';
-import {handleValidationErrors , mapChapterNamesToIds , authenticateCookie} from '../middlewares.mjs'
+import {handleValidationErrors ,  mapNamesToIds , authenticateCookie} from '../middlewares.mjs'
 import {
   idValidation,
   createMembershipValidation,
@@ -15,7 +15,7 @@ router.post(
   authenticateCookie,
   createMembershipValidation,
   handleValidationErrors,
-  mapChapterNamesToIds,
+   mapNamesToIds,
   async (req, res) => {
     try {
       if (!req.body.user_id || !req.body.chapter_id) {
@@ -112,7 +112,7 @@ router.put(
   authenticateCookie,
   updateMembershipValidation,
   handleValidationErrors,
-  mapChapterNamesToIds,
+   mapNamesToIds,
   async (req, res) => {
     try {
       const updated = await Membership.findByIdAndUpdate(

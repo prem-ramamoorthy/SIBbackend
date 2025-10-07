@@ -1,6 +1,6 @@
 import express from 'express';
 import { ChapterSummary } from './ChapterSchema.mjs';
-import {handleValidationErrors , mapChapterNamesToIds , authenticateCookie} from '../middlewares.mjs'
+import {handleValidationErrors ,  mapNamesToIds , authenticateCookie} from '../middlewares.mjs'
 import {
   idValidation,
   createSummaryValidation,
@@ -15,7 +15,7 @@ router.post(
   authenticateCookie ,
   createSummaryValidation,
   handleValidationErrors,
-  mapChapterNamesToIds,
+   mapNamesToIds,
   async (req, res) => {
     try {
       if (!req.body.chapter_id) {
@@ -113,7 +113,7 @@ router.put(
   '/updatestatisticsbyid/:id',authenticateCookie ,
   updateSummaryValidation,
   handleValidationErrors,
-  mapChapterNamesToIds,
+   mapNamesToIds,
   async (req, res) => {
     try {
       const updated = await ChapterSummary.findByIdAndUpdate(
