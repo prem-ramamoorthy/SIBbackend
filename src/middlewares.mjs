@@ -4,6 +4,7 @@ import { Vertical } from '../src/Admin/AdminSchemas.mjs';
 import User from "../Auth/Schemas.mjs";
 import { Chapter } from "./chapter/ChapterSchema.mjs";
 import { MemberProfile } from "./profile/ProfileSchema.mjs";
+import { Referral } from "./slips/slipsSchema.mjs";
 
 export const authenticateCookie = async (req, res, next) => {
   const sessionCookie = req.cookies.session || "";
@@ -125,6 +126,36 @@ export async function mapNamesToIds(req, res, next) {
       }
       req.body.inviting_member_id = member._id;
       delete req.body.inviting_member_display_name;
+    }
+    if (typeof req.body.referral_code === 'string' && req.body.referral_code.trim()) {
+      const referral = await Referral.findOne({ referral_code: req.body.referral_code }).select('_id');
+      if (!referral) {
+        return res.status(400).json({
+          errors: [{ type: 'field', path: 'referral_code', msg: 'Referral not found by code' }]
+        });
+      }
+      req.body.referral_id = referral._id;
+      delete req.body.referral_code;
+    }
+    if (typeof req.body.payer_displayname === 'string' && req.body.payer_displayname.trim()) {
+      const payer = await MemberProfile.findOne({ display_name: req.body.payer_displayname }).select('_id');
+      if (!payer) {
+        return res.status(400).json({
+          errors: [{ type: 'field', path: 'payer_displayname', msg: 'Payer profile not found by display name' }]
+        });
+      }
+      req.body.payer_id = payer._id;
+      delete req.body.payer_displayname;
+    }
+    if (typeof req.body.receiver_displayname === 'string' && req.body.receiver_displayname.trim()) {
+      const receiver = await MemberProfile.findOne({ display_name: req.body.receiver_displayname }).select('_id');
+      if (!receiver) {
+        return res.status(400).json({
+          errors: [{ type: 'field', path: 'receiver_displayname', msg: 'Receiver profile not found by display name' }]
+        });
+      }
+      req.body.receiver_id = receiver._id;
+      delete req.body.receiver_displayname;
     }
     next();
   } catch (e) {

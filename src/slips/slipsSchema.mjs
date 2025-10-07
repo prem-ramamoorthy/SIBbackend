@@ -236,3 +236,81 @@ visitorSchema.index({ inviting_member_id: 1, visitor_email: 1 });
 
 export const Visitor = mongoose.model('visitors', visitorSchema);
 
+const tyftbSchema = new Schema({
+  referral_id: {
+    type: Types.ObjectId,
+    ref: 'referrals',
+    required: true,
+    index: true
+  },
+  payer_id: {
+    type: Types.ObjectId,
+    ref: 'profiles',
+    required: true,
+    index: true
+  },
+  receiver_id: {
+    type: Types.ObjectId,
+    ref: 'profiles',
+    required: true,
+    index: true
+  },
+  business_type: {
+    type: String,
+    required: true,
+    trim: true,
+    maxLength: 50
+  },
+  referral_type: {
+    type: String,
+    required: true,
+    trim: true,
+    maxLength: 20
+  },
+  business_amount: {
+    type: mongoose.Types.Decimal128,
+    required: true,
+    min: 0,
+    get: v => (v ? parseFloat(v.toString()) : 0)
+  },
+  currency: {
+    type: String,
+    required: true,
+    trim: true,
+    maxLength: 10
+  },
+  business_description: {
+    type: String,
+    required: true,
+    trim: true
+  },
+  date_closed: {
+    type: Date,
+    required: true
+  },
+  invoice_number: {
+    type: String,
+    required: true,
+    trim: true,
+    maxLength: 50
+  },
+  verification_status: {
+    type: String,
+    required: true,
+    trim: true,
+    maxLength: 20
+  },
+  created_at: {
+    type: Date,
+    required: true,
+    default: Date.now
+  }
+}, {
+  timestamps: true,
+  toJSON: { getters: true },
+  toObject: { getters: true }
+});
+
+tyftbSchema.index({ payer_id: 1, receiver_id: 1, date_closed: -1 });
+
+export const TYFTB = mongoose.model('tyftb', tyftbSchema);

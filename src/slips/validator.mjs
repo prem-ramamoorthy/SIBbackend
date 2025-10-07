@@ -98,3 +98,34 @@ export const updateVisitorValidation = [
   body('converted_to_member').optional().isBoolean(),
   body('member_username').optional().isString()
 ];
+
+export const createTyftbValidation = [
+  body('referral_code').isString().notEmpty().isLength({ max: 20 }),
+  body('payer_displayname').isString().notEmpty(),
+  body('receiver_displayname').isString().notEmpty(),
+  body('business_type').isString().notEmpty().isLength({ max: 50 }),
+  body('referral_type').isString().notEmpty().isLength({ max: 20 }),
+  body('business_amount').isDecimal().notEmpty(),
+  body('currency').isString().notEmpty().isLength({ max: 10 }),
+  body('business_description').isString().notEmpty(),
+  body('date_closed').isISO8601().notEmpty(),
+  body('invoice_number').isString().notEmpty().isLength({ max: 50 }),
+  body('verification_status').isString().notEmpty().isLength({ max: 20 }),
+  body('created_at').isISO8601().notEmpty()
+];
+
+export const updateTyftbValidation = [
+  param('id').isMongoId(),
+  body('referral_code').optional().isString().isLength({ max: 20 }),
+  body('payer_displayname').optional().isString(),
+  body('receiver_displayname').optional().isString(),
+  body('business_type').optional().isString().isLength({ max: 50 }),
+  body('referral_type').optional().isString().isLength({ max: 20 }),
+  body('business_amount').optional().isDecimal(),
+  body('currency').optional().isString().isLength({ max: 10 }),
+  body('business_description').optional().isString(),
+  body('date_closed').optional().isISO8601(),
+  body('invoice_number').optional().isString().isLength({ max: 50 }),
+  body('verification_status').optional().isString().isLength({ max: 20 }),
+  body('created_at').optional().isISO8601()
+];
