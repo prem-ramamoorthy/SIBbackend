@@ -76,3 +76,94 @@ const oneToOneMeetingSchema = new Schema({
 oneToOneMeetingSchema.index({ chapter_id: 1, meeting_date: -1 });
 
 export const OneToOneMeeting = mongoose.model('one_to_one_meetings', oneToOneMeetingSchema);
+
+const referralSchema = new Schema({
+  referral_code: {
+    type: String,
+    required: true,
+    trim: true,
+    maxLength: 20
+  },
+  referrer_id: {
+    type: Types.ObjectId,
+    ref: 'users',
+    required: true,
+    index: true
+  },
+  referee_id: {
+    type: Types.ObjectId,
+    ref: 'users',
+    required: true,
+    index: true
+  },
+  contact_name: {
+    type: String,
+    required: true,
+    trim: true,
+    maxLength: 100
+  },
+  description: {
+    type: String,
+    required: true,
+    trim: true
+  },
+  referral_type: {
+    type: String,
+    required: true,
+    trim: true,
+    maxLength: 20
+  },
+  referral_category: {
+    type: String,
+    required: true,
+    trim: true,
+    maxLength: 100
+  },
+  contact_phone: {
+    type: String,
+    required: true,
+    trim: true,
+    maxLength: 20
+  },
+  contact_email: {
+    type: String,
+    required: true,
+    trim: true,
+    maxLength: 100
+  },
+  contact_date: {
+    type: Date,
+    required: true
+  },
+  comments: {
+    type: String,
+    required: true,
+    trim: true
+  },
+  hot: {
+    type: String,
+    required: true,
+    trim: true,
+    maxLength: 20
+  },
+  referral_status: {
+    type: String,
+    required: true,
+    trim: true,
+    maxLength: 20
+  },
+  created_at: {
+    type: Date,
+    required: true,
+    default: Date.now
+  }
+},
+{
+  timestamps: true,
+  toJSON: { getters: true },
+  toObject: { getters: true }
+});
+
+referralSchema.index({ referral_code: 1 }, { unique: true });
+
+export const Referral = mongoose.model('referrals', referralSchema);

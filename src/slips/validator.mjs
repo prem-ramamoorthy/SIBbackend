@@ -34,3 +34,38 @@ export const updateOneToOneMeetingValidation = [
   body('photo').optional().isString().isLength({ max: 500 }),
   body('created_by_username').optional().isString()
 ];
+
+export const createReferralValidation = [
+  body('referral_code').isString().isLength({ max: 20 }).notEmpty(),
+  body('referrer_username').isString().notEmpty(),
+  body('referee_username').isString().notEmpty(),
+  body('contact_name').isString().isLength({ max: 100 }).notEmpty(),
+  body('description').isString().notEmpty(),
+  body('referral_type').isString().isLength({ max: 20 }).notEmpty(),
+  body('referral_category').isString().isLength({ max: 100 }).notEmpty(),
+  body('contact_phone').isString().isLength({ max: 20 }).notEmpty(),
+  body('contact_email').isEmail().isLength({ max: 100 }).notEmpty(),
+  body('contact_date').isISO8601().toDate().notEmpty(),
+  body('comments').isString().notEmpty(),
+  body('hot').isString().isLength({ max: 20 }).notEmpty(),
+  body('referral_status').isString().isLength({ max: 20 }).notEmpty(),
+  body('created_at').isISO8601().toDate().notEmpty()
+];
+
+export const updateReferralValidation = [
+  param('id').isMongoId(),
+  body('referral_code').optional().isString().isLength({ max: 20 }),
+  body('referrer_username').optional().isString(),
+  body('referee_username').optional().isString(),
+  body('contact_name').optional().isString().isLength({ max: 100 }),
+  body('description').optional().isString(),
+  body('referral_type').optional().isString().isLength({ max: 20 }),
+  body('referral_category').optional().isString().isLength({ max: 100 }),
+  body('contact_phone').optional().isString().isLength({ max: 20 }),
+  body('contact_email').optional().isEmail().isLength({ max: 100 }),
+  body('contact_date').optional().isISO8601().toDate(),
+  body('comments').optional().isString(),
+  body('hot').optional().isString().isLength({ max: 20 }),
+  body('referral_status').optional().isString().isLength({ max: 20 }),
+  body('created_at').optional().isISO8601().toDate()
+];

@@ -12,7 +12,7 @@ export const authenticateCookie = async (req, res, next) => {
     req.user = decodedClaims;
     next();
   } catch (err) {
-    return res.status(401).json({ message: "Unauthorized" , error : err });
+    return res.status(401).json({ message: "Unauthorized", error: err });
   }
 };
 
@@ -85,6 +85,26 @@ export async function mapNamesToIds(req, res, next) {
       }
       req.body.created_by = user._id;
       delete req.body.created_by_username;
+    }
+    if (typeof req.body.referrer_username === 'string' && req.body.referrer_username.trim()) {
+      const user = await User.findOne({ username: req.body.referrer_username }).select('_id');
+      if (!user) {
+        return res.status(400).json({
+          errors: [{ type: 'field', path: 'referrer_username', msg: 'Referrer user not found by username' }]
+        });
+      }
+      req.body.referrer_id = user._id;
+      delete req.body.referrer_username;
+    }
+    if (typeof req.body.referee_username === 'string' && req.body.referee_username.trim()) {
+      const user = await User.findOne({ username: req.body.referee_username }).select('_id');
+      if (!user) {
+        return res.status(400).json({
+          errors: [{ type: 'field', path: 'referee_username', msg: 'Referee user not found by username' }]
+        });
+      }
+      req.body.referee_id = user._id;
+      delete req.body.referee_username;
     }
     next();
   } catch (e) {
