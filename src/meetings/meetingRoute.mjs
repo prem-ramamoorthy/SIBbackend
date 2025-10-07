@@ -1,6 +1,7 @@
 import express from 'express';
 import mongoose from 'mongoose';
 import { Meeting } from './MeetingsSchema.mjs';
+import AttendanceRouter  from './MeetigAttendanceRoute.mjs';
 import {
   idValidation,
   createMeetingValidation,
@@ -9,6 +10,7 @@ import {
 import { handleValidationErrors , authenticateCookie , mapNamesToIds } from '../middlewares.mjs';
 
 const router = express.Router();
+router.use('/attendance' , AttendanceRouter )
 
 router.post(
   '/createmeeting',

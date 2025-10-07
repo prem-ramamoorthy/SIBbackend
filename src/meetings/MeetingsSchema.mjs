@@ -78,3 +78,47 @@ const meetingSchema = new Schema(
 meetingSchema.index({ chapter_id: 1, meeting_date: 1 });
 
 export const Meeting = mongoose.model('meetings', meetingSchema);
+
+const attendanceSchema = new Schema({
+  user_id: {
+    type: Types.ObjectId,
+    ref: 'users',
+    required: true,
+    index: true
+  },
+  attendance_status: {
+    type: String,
+    required: true,
+    trim: true,
+    maxLength: 20
+  },
+  substitute_user_id: {
+    type: Types.ObjectId,
+    ref: 'users',
+    default: null,
+    index: true
+  },
+  absence_reason: {
+    type: String,
+    trim: true,
+    maxLength: 255
+  },
+  notes: {
+    type: String,
+    trim: true
+  },
+  created_at: {
+    type: Date,
+    required: true,
+    default: Date.now
+  }
+},
+{
+  timestamps: false,
+  toJSON: { getters: true },
+  toObject: { getters: true }
+});
+
+attendanceSchema.index({ user_id: 1, created_at: 1 });
+
+export const Attendance = mongoose.model('attendance', attendanceSchema);

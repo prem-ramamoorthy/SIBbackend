@@ -34,3 +34,22 @@ export const updateMeetingValidation = [
   body('total_tyftb').optional().isDecimal(),
   body('meeting_status').optional().isString().isLength({ max: 20 })
 ];
+
+export const createAttendanceValidation = [
+  body('username').isString().notEmpty(),
+  body('attendance_status').isString().isLength({ max: 20 }).notEmpty(),
+  body('substitute_username').optional().isString(),
+  body('absence_reason').optional().isString().isLength({ max: 255 }),
+  body('notes').optional().isString(),
+  body('created_at').isISO8601().toDate().notEmpty()
+];
+
+export const updateAttendanceValidation = [
+  param('id').isMongoId(),
+  body('username').optional().isString(),
+  body('attendance_status').optional().isString().isLength({ max: 20 }),
+  body('substitute_username').optional().isString(),
+  body('absence_reason').optional().isString().isLength({ max: 255 }),
+  body('notes').optional().isString(),
+  body('created_at').optional().isISO8601().toDate()
+];
