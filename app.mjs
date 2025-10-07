@@ -12,6 +12,7 @@ import ChapterRouter from "./src/chapter/MainRoute.mjs";
 import ProfileRouter from "./src/profile/profileRoute.mjs";
 import MeetingRouter from "./src/meetings/meetingRoute.mjs";
 import slipsRouter from "./src/slips/slipsRoute.mjs";
+import MemberRouter from "./src/members/memberRoute.mjs";
 
 connectDB() ;
 
@@ -38,6 +39,7 @@ app.use('/chapter' , ChapterRouter)
 app.use('/profile', ProfileRouter)
 app.use('/meeting', MeetingRouter)
 app.use('/slips',slipsRouter)
+app.use('/member' , MemberRouter)
 
 app.get("/", (req, res) => {
   res.status(200).sendFile(path.join(__dirname, "index.html"));
