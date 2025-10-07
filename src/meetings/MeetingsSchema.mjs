@@ -114,7 +114,7 @@ const attendanceSchema = new Schema({
   }
 },
 {
-  timestamps: false,
+  timestamps: true,
   toJSON: { getters: true },
   toObject: { getters: true }
 });
