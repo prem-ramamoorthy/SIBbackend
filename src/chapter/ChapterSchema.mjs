@@ -18,7 +18,7 @@ const chapterSchema = new mongoose.Schema({
 }
 );
 
-export const Chapter = mongoose.model('Chapter', chapterSchema);
+export const Chapter = mongoose.model('chapters', chapterSchema);
 
 const { Schema, Types } = mongoose;
 
@@ -26,13 +26,13 @@ const membershipSchema = new Schema(
   {
     user_id: {
       type: Types.ObjectId,
-      ref: 'User',
+      ref: 'users',
       required: true,
       index: true
     },
     chapter_id: {
       type: Types.ObjectId,
-      ref: 'Chapter',
+      ref: 'chapters',
       required: true,
       index: true
     },
@@ -73,7 +73,7 @@ const chapterSummarySchema = new Schema(
   {
     chapter_id: {
       type: mongoose.Types.ObjectId,
-      ref: 'Chapter',
+      ref: 'chapters',
       required: true,
       index: true
     },

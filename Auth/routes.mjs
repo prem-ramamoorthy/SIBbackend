@@ -30,6 +30,7 @@ router.post("/signup", signupValidator, handleValidation, async (req, res) => {
 
 router.post("/sessionLogin", loginValidator, handleValidation, async (req, res) => {
   const idToken = req.body.idToken?.toString();
+  const user_id = req.body.user_id?.toString();
   const expiresIn = parseInt(process.env.SESSION_EXPIRY) || 60 * 60 * 24 * 5 * 1000;
   if (!idToken) {
     return res.status(400).json({ error: "Missing ID token" });
@@ -37,6 +38,12 @@ router.post("/sessionLogin", loginValidator, handleValidation, async (req, res) 
   try {
     const sessionCookie = await admin.auth().createSessionCookie(idToken, { expiresIn });
     res.cookie("session", sessionCookie, {
+      maxAge: expiresIn,
+      httpOnly: true,
+      secure: true,
+      sameSite: "none",
+    });
+    res.cookie("userid", user_id, {
       maxAge: expiresIn,
       httpOnly: true,
       secure: true,

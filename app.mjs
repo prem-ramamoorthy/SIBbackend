@@ -14,6 +14,7 @@ import MeetingRouter from "./src/meetings/meetingRoute.mjs";
 import slipsRouter from "./src/slips/slipsRoute.mjs";
 import MemberRouter from "./src/members/memberRoute.mjs";
 import EventRouter from "./src/events/eventRoute.mjs";
+import DashboardRouter from "./src/dashboard/dashboardRoute.mjs";
 
 connectDB() ;
 
@@ -42,6 +43,7 @@ app.use('/meeting', MeetingRouter)
 app.use('/slips',slipsRouter)
 app.use('/member' , MemberRouter)
 app.use('/event', EventRouter)
+app.use('/dashboard', DashboardRouter)
 
 app.get("/", (req, res) => {
   res.status(200).sendFile(path.join(__dirname, "index.html"));

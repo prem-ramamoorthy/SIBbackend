@@ -62,7 +62,7 @@ const meetingSchema = new Schema(
       min: 0
     },
     meeting_status: {
-      type: String,
+      type: Boolean,
       required: true,
       trim: true,
       maxLength: 20

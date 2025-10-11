@@ -16,7 +16,7 @@ export const createMeetingValidation = [
   body('total_visitors').isInt({ min: 0 }).notEmpty(),
   body('total_referrals').isInt({ min: 0 }).notEmpty(),
   body('total_tyftb').isDecimal().notEmpty(),
-  body('meeting_status').isString().isLength({ max: 20 }).notEmpty()
+  body('meeting_status').isBoolean().isLength({ max: 20 }).notEmpty()
 ];
 
 export const updateMeetingValidation = [
@@ -32,7 +32,7 @@ export const updateMeetingValidation = [
   body('total_visitors').optional().isInt({ min: 0 }),
   body('total_referrals').optional().isInt({ min: 0 }),
   body('total_tyftb').optional().isDecimal(),
-  body('meeting_status').optional().isString().isLength({ max: 20 })
+  body('meeting_status').optional().isBoolean().isLength({ max: 20 })
 ];
 
 export const createAttendanceValidation = [
