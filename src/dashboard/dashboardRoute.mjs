@@ -10,7 +10,7 @@ const router = express.Router();
 
 router.get('/getchapteroverview', authenticateCookie, async (req, res) => {
     try {
-        const user_id = req.cookies.userid?.toString() || "";
+        const user_id = req.user.uid ;
         if (!user_id) {
             return res.status(400).json({ error: "Missing user id." });
         }
@@ -51,7 +51,7 @@ router.get('/getchapteroverview', authenticateCookie, async (req, res) => {
 
 router.get('/getupcomingevents', authenticateCookie, async (req, res) => {
   try {
-    const user_id = req.cookies.userid?.toString() || "";
+    const user_id = req.user.uid ;
     if (!user_id) {
       return res.status(400).json({ error: "Missing user id." });
     }
@@ -89,7 +89,7 @@ router.get('/getupcomingevents', authenticateCookie, async (req, res) => {
 
 router.get('/getrenewaldate', authenticateCookie, async (req, res) => {
   try {
-    const user_id = req.cookies.userid?.toString() || "";
+    const user_id = req.user.uid ;
     if (!user_id) {
       return res.status(400).json({ error: "Missing user id." });
     }

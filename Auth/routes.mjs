@@ -43,12 +43,6 @@ router.post("/sessionLogin", loginValidator, handleValidation, async (req, res) 
       secure: true,
       sameSite: "none",
     });
-    res.cookie("userid", user_id, {
-      maxAge: expiresIn,
-      httpOnly: true,
-      secure: true,
-      sameSite: "none",
-    });
     res.json({ message: "Session created" });
   } catch (error) {
     console.error("Error creating session cookie:", error);
