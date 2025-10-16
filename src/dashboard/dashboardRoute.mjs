@@ -5,7 +5,7 @@ import User from '../../Auth/Schemas.mjs';
 import { Meeting } from '../meetings/MeetingsSchema.mjs';
 import { formatDate } from '../utils/dateformatter.mjs';
 import { Event } from '../events/eventSchema.mjs';
-import { Referral , TYFTB , OneToOneMeeting , Visitor} from '../slips/slipsSchema.mjs';
+import { Referral, TYFTB, OneToOneMeeting, Visitor } from '../slips/slipsSchema.mjs';
 
 const router = express.Router();
 
@@ -125,17 +125,110 @@ router.get('/getactivity', authenticateCookie, async (req, res) => {
 		const tyftb_given = await TYFTB.countDocuments({ payer_id: userObj });
 		const tyftb_received = await TYFTB.countDocuments({ receiver_id: userObj });
 		const M2Ms = await OneToOneMeeting.countDocuments({ created_by: userObj });
-		const Visitors = await Visitor.countDocuments({ inviting_member_id : userObj });
+		const Visitors = await Visitor.countDocuments({ inviting_member_id: userObj });
 		const result = await TYFTB.aggregate([
 			{ $match: { receiver_id: userObj } },
 			{ $group: { _id: null, totalBusiness: { $sum: "$business_amount" } } }
 		]);
 
 		const business_made = result[0]?.totalBusiness || 0;
-		return res.status(200).json({ referral_given, referral_received, tyftb_given, tyftb_received , business_made , M2Ms  , Visitors});
+		return res.status(200).json({ referral_given, referral_received, tyftb_given, tyftb_received, business_made, M2Ms, Visitors });
 	} catch (err) {
 		console.error('Error fetching activity:', err);
 		return res.status(500).json({ error: "Internal server error." });
+	}
+});
+
+router.get('/weekstats', authenticateCookie, async (req, res) => {
+	try {
+		const userId = req.user && req.user.uid;
+		if (!userId) {
+			return res.status(400).json({ error: "Missing user id." });
+		}
+		const userObj = await User.findOne({ user_id: userId });
+		const referral_given = await Referral.aggregate([
+			{
+				'$match': {
+					'referee_id': userObj._id
+				}
+			}, {
+				'$group': {
+					'_id': {
+						'week': {
+							'$week': '$created_at'
+						},
+						'year': {
+							'$year': '$created_at'
+						}
+					},
+					'count': {
+						'$sum': 1
+					}
+				}
+			}, {
+				'$sort': {
+					'_id.year': 1,
+					'_id.week': 1
+				}
+			}
+		])
+		const tyftb_given = await TYFTB.aggregate([
+			{
+				'$match': {
+					'payer_id': userObj._id
+				}
+			}, {
+				'$group': {
+					'_id': {
+						'week': {
+							'$week': '$created_at'
+						},
+						'year': {
+							'$year': '$created_at'
+						}
+					},
+					'count': {
+						'$sum': 1
+					}
+				}
+			}, {
+				'$sort': {
+					'_id.year': 1,
+					'_id.week': 1
+				}
+			}
+		])
+
+		const M2M = await OneToOneMeeting.aggregate([
+			{
+				'$match': {
+					'payer_id': userObj._id
+				}
+			}, {
+				'$group': {
+					'_id': {
+						'week': {
+							'$week': '$created_at'
+						},
+						'year': {
+							'$year': '$created_at'
+						}
+					},
+					'count': {
+						'$sum': 1
+					}
+				}
+			}, {
+				'$sort': {
+					'_id.year': 1,
+					'_id.week': 1
+				}
+			}
+		])
+		
+		res.json({ referral_given, tyftb_given , M2M });
+	} catch (error) {
+		res.status(500).json({ error: "Could not fetch week stats." });
 	}
 });
 
