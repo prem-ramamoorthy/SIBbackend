@@ -1,11 +1,12 @@
 import express from 'express';
-import { authenticateCookie } from '../middlewares.mjs';
+import { authenticateCookie, handleValidationErrors } from '../middlewares.mjs';
 import { Chapter, Membership, ChapterSummary } from '../chapter/ChapterSchema.mjs';
 import User from '../../Auth/Schemas.mjs';
 import { Meeting } from '../meetings/MeetingsSchema.mjs';
 import { formatDate } from '../utils/dateformatter.mjs';
 import { Event } from '../events/eventSchema.mjs';
 import { Referral, TYFTB, OneToOneMeeting, Visitor } from '../slips/slipsSchema.mjs';
+import { searchUserValidator } from './validator.mjs';
 
 const router = express.Router();
 
@@ -225,11 +226,57 @@ router.get('/weekstats', authenticateCookie, async (req, res) => {
 				}
 			}
 		])
-		
-		res.json({ referral_given, tyftb_given , M2M });
+
+		res.json({ referral_given, tyftb_given, M2M });
 	} catch (error) {
 		res.status(500).json({ error: "Could not fetch week stats." });
 	}
 });
+
+router.post('/searchuser', authenticateCookie, searchUserValidator, handleValidationErrors, async (req, res) => {
+	try {
+		const { substr } = req.body;
+		const userUid = req.user && req.user.uid;
+
+		if (!userUid) {
+			return res.status(400).json({ error: "Missing user id." });
+		}
+
+		if (!substr || substr.trim() === "") {
+			return res.status(400).json({ error: "Search substring required." });
+		}
+
+		const userObj = await User.findOne({ user_id: userUid });
+		if (!userObj) {
+			return res.status(404).json({ error: "User not found." });
+		}
+
+		const membership = await Membership.findOne({ user_id: userObj._id });
+		if (!membership || !membership.chapter_id) {
+			return res.status(404).json({ error: "Membership or chapter not found." });
+		}
+
+		const sameChapterMemberships = await Membership.find({
+			chapter_id: membership.chapter_id
+		}).select("user_id");
+
+		const memberIds = sameChapterMemberships.map(m => m.user_id);
+
+		const matchedUsers = await User.find({
+			_id: { $in: memberIds },
+			username: { $regex: substr, $options: "i" }
+		}).select("username");
+
+		return res.status(200).json({
+			count: matchedUsers.length,
+			results: matchedUsers
+		});
+
+	} catch (error) {
+		console.error(error);
+		return res.status(500).json({ error: "Internal Server Error." });
+	}
+});
+
 
 export default router;
