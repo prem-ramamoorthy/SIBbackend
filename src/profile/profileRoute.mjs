@@ -7,8 +7,10 @@ import {
 } from './validator.mjs';
 import {authenticateCookie , handleValidationErrors , mapNamesToIds } from '../middlewares.mjs'
 import mongoose from 'mongoose';
+import pageRouter from './profilepagereqiests.mjs'
 
 const router = express.Router();
+router.use(pageRouter)
 
 router.post(
   '/createprofile',
