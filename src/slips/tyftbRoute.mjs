@@ -13,9 +13,8 @@ router.post(
     mapNamesToIds, authenticateCookie,
     async (req, res) => {
         try {
-            if (!req.body.referral_id || !req.body.payer_id || !req.body.receiver_id)
-                return res.status(400).json({ message: 'Referral, payer and receiver must be specified and valid.' });
-
+            if (!req.body.payer_id || !req.body.receiver_id)
+                return res.status(400).json({ message: 'Payer and receiver must be specified and valid.' });
             const tyftb = new TYFTB(req.body);
             const saved = await tyftb.save();
             res.status(201).json(saved);

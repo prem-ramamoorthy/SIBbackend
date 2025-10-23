@@ -9,13 +9,8 @@ export const createOneToOneMeetingValidation = [
   body('member2_name').isString().notEmpty(),
   body('chapter_name').isString().notEmpty(),
   body('meeting_date').isISO8601().toDate().notEmpty(),
-  body('meeting_time').isString().notEmpty(),
   body('location').isString().isLength({ max: 255 }).notEmpty(),
-  body('duration_minutes').isInt({ min: 1 }).notEmpty(),
   body('discussion_points').optional().isString(),
-  body('gains_discussed').optional().isString(),
-  body('status').isString().isLength({ max: 20 }).notEmpty(),
-  body('photo').optional().isString().isLength({ max: 500 }),
   body('created_by_username').isString().notEmpty()
 ];
 
@@ -25,48 +20,39 @@ export const updateOneToOneMeetingValidation = [
   body('member2_name').optional().isString(),
   body('chapter_name').optional().isString(),
   body('meeting_date').optional().isISO8601().toDate(),
-  body('meeting_time').optional().isString(),
   body('location').optional().isString().isLength({ max: 255 }),
-  body('duration_minutes').optional().isInt({ min: 1 }),
   body('discussion_points').optional().isString(),
-  body('gains_discussed').optional().isString(),
-  body('status').optional().isString().isLength({ max: 20 }),
-  body('photo').optional().isString().isLength({ max: 500 }),
   body('created_by_username').optional().isString()
 ];
 
 export const createReferralValidation = [
-  body('referral_code').isString().isLength({ max: 20 }).notEmpty(),
   body('referrer_username').isString().notEmpty(),
   body('referee_username').isString().notEmpty(),
   body('contact_name').isString().isLength({ max: 100 }).notEmpty(),
   body('description').isString().notEmpty(),
   body('referral_type').isString().isLength({ max: 20 }).notEmpty(),
-  body('referral_category').isString().isLength({ max: 100 }).notEmpty(),
-  body('contact_phone').isString().isLength({ max: 20 }).notEmpty(),
-  body('contact_email').isEmail().isLength({ max: 100 }).notEmpty(),
-  body('contact_date').isISO8601().toDate().notEmpty(),
-  body('comments').isString().notEmpty(),
+  body('referral_status').isArray({ max : 3 }),
+  body('contact_phone').isString().isLength({ max: 20 }),
+  body('contact_email').isEmail().isLength({ max: 100 }),
+  body('contact_address').isString(),
+  body('comments').isString(),
   body('hot').isString().isLength({ max: 20 }).notEmpty(),
-  body('referral_status').isString().isLength({ max: 20 }).notEmpty(),
   body('created_at').isISO8601().toDate().notEmpty()
 ];
 
 export const updateReferralValidation = [
   param('id').isMongoId(),
-  body('referral_code').optional().isString().isLength({ max: 20 }),
   body('referrer_username').optional().isString(),
   body('referee_username').optional().isString(),
   body('contact_name').optional().isString().isLength({ max: 100 }),
   body('description').optional().isString(),
   body('referral_type').optional().isString().isLength({ max: 20 }),
-  body('referral_category').optional().isString().isLength({ max: 100 }),
+  body('referral_status').optional().isArray({ max : 3 }),
   body('contact_phone').optional().isString().isLength({ max: 20 }),
   body('contact_email').optional().isEmail().isLength({ max: 100 }),
-  body('contact_date').optional().isISO8601().toDate(),
+  body('contact_address').optional().isString(),
   body('comments').optional().isString(),
   body('hot').optional().isString().isLength({ max: 20 }),
-  body('referral_status').optional().isString().isLength({ max: 20 }),
   body('created_at').optional().isISO8601().toDate()
 ];
 
@@ -100,17 +86,13 @@ export const updateVisitorValidation = [
 ];
 
 export const createTyftbValidation = [
-  body('referral_code').isString().notEmpty().isLength({ max: 20 }),
+  body('referral_code').isString().isLength({ max: 20 }).optional(),
   body('payer_displayname').isString().notEmpty(),
   body('receiver_displayname').isString().notEmpty(),
   body('business_type').isString().notEmpty().isLength({ max: 50 }),
   body('referral_type').isString().notEmpty().isLength({ max: 20 }),
   body('business_amount').isDecimal().notEmpty(),
-  body('currency').isString().notEmpty().isLength({ max: 10 }),
-  body('business_description').isString().notEmpty(),
-  body('date_closed').isISO8601().notEmpty(),
-  body('invoice_number').isString().notEmpty().isLength({ max: 50 }),
-  body('verification_status').isString().notEmpty().isLength({ max: 20 }),
+  body('business_description').isString().optional(),
   body('created_at').isISO8601().notEmpty()
 ];
 
@@ -122,10 +104,6 @@ export const updateTyftbValidation = [
   body('business_type').optional().isString().isLength({ max: 50 }),
   body('referral_type').optional().isString().isLength({ max: 20 }),
   body('business_amount').optional().isDecimal(),
-  body('currency').optional().isString().isLength({ max: 10 }),
   body('business_description').optional().isString(),
-  body('date_closed').optional().isISO8601(),
-  body('invoice_number').optional().isString().isLength({ max: 50 }),
-  body('verification_status').optional().isString().isLength({ max: 20 }),
   body('created_at').optional().isISO8601()
 ];
