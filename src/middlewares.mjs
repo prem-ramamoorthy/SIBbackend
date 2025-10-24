@@ -148,7 +148,7 @@ export async function mapNamesToIds(req, res, next) {
       delete req.body.payer_displayname;
     }
     if (typeof req.body.receiver_displayname === 'string' && req.body.receiver_displayname.trim()) {
-      const receiver = await MemberProfile.findOne({ display_name: req.body.receiver_displayname }).select('_id');
+      const receiver = await User.findOne({ username : req.body.receiver_displayname }).select('_id');
       if (!receiver) {
         return res.status(400).json({
           errors: [{ type: 'field', path: 'receiver_displayname', msg: 'Receiver profile not found by display name' }]

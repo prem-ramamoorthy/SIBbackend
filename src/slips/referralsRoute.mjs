@@ -21,8 +21,8 @@ router.post(
                 return res.status(201).json({ message: 'Valid referrer_username and referee_username are required.' });
             }
             const doc = new Referral(req.body);
-            await doc.save();
-            res.status(201).json("Referral created successfully");
+            const saved = await doc.save();
+            res.status(201).json("Referral created successfully with ID: " + saved._id);
         } catch (err) {
             res.status(500).json({ error: err.message });
         }

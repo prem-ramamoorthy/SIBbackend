@@ -3,21 +3,35 @@ import mongoose from 'mongoose';
 import { TYFTB } from './slipsSchema.mjs';
 import { createTyftbValidation, updateTyftbValidation, idValidation } from './validator.mjs';
 import { mapNamesToIds, authenticateCookie, handleValidationErrors } from '../middlewares.mjs';
+import User from '../../Auth/Schemas.mjs';
 
 const router = express.Router();
 
 router.post(
     '/createtyftb',
+    authenticateCookie,
     createTyftbValidation,
     handleValidationErrors,
-    mapNamesToIds, authenticateCookie,
+    mapNamesToIds,
     async (req, res) => {
         try {
+            const user_id = req.user.uid;
+            if (!user_id) {
+                return res.status(400).json({ error: "Missing user id." });
+            }
+
+            const userObj = await User.findOne({ user_id });
+            if (!userObj || !userObj._id) {
+                return res.status(404).json({ error: "User not found with UID" });
+            }
+
+            req.body.payer_id = userObj._id;
+
             if (!req.body.payer_id || !req.body.receiver_id)
                 return res.status(400).json({ message: 'Payer and receiver must be specified and valid.' });
             const tyftb = new TYFTB(req.body);
             const saved = await tyftb.save();
-            res.status(201).json(saved);
+            res.status(201).json("TYFTB record created successfully with ID: " + saved._id);
         } catch (err) {
             res.status(500).json({ error: err.message });
         }

@@ -87,7 +87,6 @@ export const updateVisitorValidation = [
 
 export const createTyftbValidation = [
   body('referral_code').isString().isLength({ max: 20 }).optional(),
-  body('payer_displayname').isString().notEmpty(),
   body('receiver_displayname').isString().notEmpty(),
   body('business_type').isString().notEmpty().isLength({ max: 50 }),
   body('referral_type').isString().notEmpty().isLength({ max: 20 }),
