@@ -233,50 +233,57 @@ router.get('/weekstats', authenticateCookie, async (req, res) => {
 	}
 });
 
-router.post('/searchuser', authenticateCookie, searchUserValidator, handleValidationErrors, async (req, res) => {
-	try {
-		const { substr } = req.body;
-		const userUid = req.user && req.user.uid;
+router.post(
+  '/searchuser',
+  authenticateCookie,
+  searchUserValidator,
+  handleValidationErrors,
+  async (req, res) => {
+    try {
+      const { substr } = req.body;
+      const userUid = req.user?.uid;
 
-		if (!userUid) {
-			return res.status(400).json({ error: "Missing user id." });
-		}
+      if (!userUid) {
+        return res.status(400).json({ error: "Missing user id." });
+      }
 
-		if (!substr || substr.trim() === "") {
-			return res.status(400).json({ error: "Search substring required." });
-		}
+      if (!substr || substr.trim() === "") {
+        return res.status(400).json({ error: "Search substring required." });
+      }
 
-		const userObj = await User.findOne({ user_id: userUid });
-		if (!userObj) {
-			return res.status(404).json({ error: "User not found." });
-		}
+      const userObj = await User.findOne({ user_id: userUid });
+      if (!userObj) {
+        return res.status(404).json({ error: "User not found." });
+      }
 
-		const membership = await Membership.findOne({ user_id: userObj._id });
-		if (!membership || !membership.chapter_id) {
-			return res.status(404).json({ error: "Membership or chapter not found." });
-		}
+      const membership = await Membership.findOne({ user_id: userObj._id });
+      if (!membership?.chapter_id) {
+        return res.status(404).json({ error: "Membership or chapter not found." });
+      }
 
-		const sameChapterMemberships = await Membership.find({
-			chapter_id: membership.chapter_id
-		}).select("user_id");
+      const sameChapterMemberships = await Membership.find({
+        chapter_id: membership.chapter_id,
+      }).select("user_id");
 
-		const memberIds = sameChapterMemberships.map(m => m.user_id);
+      const memberIds = sameChapterMemberships.map(m => m.user_id);
 
-		const matchedUsers = await User.find({
-			_id: { $in: memberIds },
-			username: { $regex: substr, $options: "i" }
-		}).select("username");
+      const matchedUsers = await User.find({
+        _id: { $in: memberIds },
+        username: { $regex: substr.trim(), $options: "i" },
+        _id: { $ne: userObj._id }
+      })
+        .select("username")
+        .limit(10);
 
-		return res.status(200).json({
-			count: matchedUsers.length,
-			results: matchedUsers
-		});
-
-	} catch (error) {
-		console.error(error);
-		return res.status(500).json({ error: "Internal Server Error." });
-	}
-});
+      return res.status(200).json({
+        results: matchedUsers.map(u => ( u.username ))
+      });
+    } catch (error) {
+      console.error("SearchUser Error:", error);
+      return res.status(500).json({ error: "Internal Server Error." });
+    }
+  }
+);
 
 
 export default router;

@@ -70,7 +70,6 @@ const referralSchema = new Schema(
 
     contact_name: {
       type: String,
-      required: [true, "Contact name is required"],
       trim: true,
       maxlength: 100
     },

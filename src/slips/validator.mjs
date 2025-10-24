@@ -28,14 +28,14 @@ export const updateOneToOneMeetingValidation = [
 export const createReferralValidation = [
   body('referrer_username').isString().notEmpty(),
   body('referee_username').isString().notEmpty(),
-  body('contact_name').isString().isLength({ max: 100 }).notEmpty(),
+  body('contact_name').isString().isLength({ max: 100 }).optional(),
   body('description').isString().notEmpty(),
   body('referral_type').isString().isLength({ max: 20 }).notEmpty(),
   body('referral_status').isArray({ max : 3 }),
-  body('contact_phone').isString().isLength({ max: 20 }),
-  body('contact_email').isEmail().isLength({ max: 100 }),
-  body('contact_address').isString(),
-  body('comments').isString(),
+  body('contact_phone').isString().isLength({ max: 20 }).isNumeric(),
+  body('contact_email').isEmail().isLength({ max: 100 }).optional(),
+  body('contact_address').isString().optional(),
+  body('comments').isString().optional(),
   body('hot').isString().isLength({ max: 20 }).notEmpty(),
   body('created_at').isISO8601().toDate().notEmpty()
 ];

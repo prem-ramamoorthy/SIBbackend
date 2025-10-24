@@ -18,11 +18,11 @@ router.post(
     async (req, res) => {
         try {
             if (!req.body.referrer_id || !req.body.referee_id) {
-                return res.status(400).json({ message: 'Valid referrer_username and referee_username are required.' });
+                return res.status(201).json({ message: 'Valid referrer_username and referee_username are required.' });
             }
             const doc = new Referral(req.body);
-            const saved = await doc.save();
-            res.status(201).json(saved);
+            await doc.save();
+            res.status(201).json("Referral created successfully");
         } catch (err) {
             res.status(500).json({ error: err.message });
         }
