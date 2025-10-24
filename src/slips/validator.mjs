@@ -5,7 +5,6 @@ export const idValidation = [
 ];
 
 export const createOneToOneMeetingValidation = [
-  body('member1_name').isString().notEmpty(),
   body('member2_name').isString().notEmpty(),
   body('chapter_name').isString().notEmpty(),
   body('meeting_date').isISO8601().toDate().notEmpty(),

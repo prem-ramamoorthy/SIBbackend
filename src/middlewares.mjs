@@ -68,7 +68,7 @@ export async function mapNamesToIds(req, res, next) {
       delete req.body.member1_name;
     }
     if (typeof req.body.member2_name === 'string' && req.body.member2_name.trim()) {
-      const member2 = await MemberProfile.findOne({ display_name: req.body.member2_name }).select('_id');
+      const member2 = await User.findOne({ username: req.body.member2_name }).select('_id');
       if (!member2) {
         return res.status(400).json({
           errors: [{ type: 'field', path: 'member2_name', msg: 'Member 2 not found by display name' }]

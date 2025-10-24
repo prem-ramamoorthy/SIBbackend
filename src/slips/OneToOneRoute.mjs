@@ -6,29 +6,44 @@ import {
   createOneToOneMeetingValidation,
   updateOneToOneMeetingValidation
 } from './validator.mjs';
-import {mapNamesToIds, authenticateCookie , handleValidationErrors} from '../middlewares.mjs'
+import { mapNamesToIds, authenticateCookie, handleValidationErrors } from '../middlewares.mjs'
+import User from '../../Auth/Schemas.mjs';
 
 const router = express.Router();
 
 router.post(
   '/createone2one',
+  authenticateCookie,
   createOneToOneMeetingValidation,
   handleValidationErrors,
-  mapNamesToIds, authenticateCookie ,
+  mapNamesToIds,
   async (req, res) => {
     try {
+      const user_id = req.user.uid;
+      
+      if (!user_id) {
+        return res.status(400).json({ error: "Missing user id." });
+      }
+
+      const userObj = await User.findOne({ user_id });
+      if (!userObj || !userObj._id) {
+        return res.status(404).json({ error: "User not found with UID" });
+      }
+
+      req.body.member1_id = userObj._id;
+
       if (!req.body.member1_id || !req.body.member2_id || !req.body.chapter_id || !req.body.created_by)
         return res.status(400).json({ message: 'All member, chapter, and user references are required and must be valid.' });
       const meeting = new OneToOneMeeting(req.body);
       const saved = await meeting.save();
-      res.status(201).json(saved);
+      res.status(201).json("One-to-One Meeting created successfully with ID: " + saved._id);
     } catch (err) {
       res.status(500).json({ error: err.message });
     }
   }
 );
 
-router.get('/getone2ones', authenticateCookie ,async (req, res) => {
+router.get('/getone2ones', authenticateCookie, async (req, res) => {
   try {
     const docs = await OneToOneMeeting.aggregate([
       { $sort: { meeting_date: -1 } },
@@ -75,7 +90,7 @@ router.get('/getone2ones', authenticateCookie ,async (req, res) => {
   }
 });
 
-router.get('/getone2onebyid/:id',authenticateCookie , idValidation, handleValidationErrors, async (req, res) => {
+router.get('/getone2onebyid/:id', authenticateCookie, idValidation, handleValidationErrors, async (req, res) => {
   try {
     const [doc] = await OneToOneMeeting.aggregate([
       { $match: { _id: new mongoose.Types.ObjectId(req.params.id) } },
@@ -127,7 +142,7 @@ router.put(
   '/updateone2onebyid/:id',
   updateOneToOneMeetingValidation,
   handleValidationErrors,
-  mapNamesToIds, authenticateCookie ,
+  mapNamesToIds, authenticateCookie,
   async (req, res) => {
     try {
       const updated = await OneToOneMeeting.findByIdAndUpdate(
@@ -144,7 +159,7 @@ router.put(
   }
 );
 
-router.delete('/deleteone2onebyid/:id', authenticateCookie ,idValidation, handleValidationErrors, async (req, res) => {
+router.delete('/deleteone2onebyid/:id', authenticateCookie, idValidation, handleValidationErrors, async (req, res) => {
   try {
     const deleted = await OneToOneMeeting.findByIdAndDelete(req.params.id);
     if (!deleted)

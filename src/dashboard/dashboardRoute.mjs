@@ -121,14 +121,14 @@ router.get('/getactivity', authenticateCookie, async (req, res) => {
 			return res.status(400).json({ error: "Missing user id." });
 		}
 		const userObj = await User.findOne({ user_id: userId });
-		const referral_given = await Referral.countDocuments({ referrer_id: userObj });
-		const referral_received = await Referral.countDocuments({ referee_id: userObj });
-		const tyftb_given = await TYFTB.countDocuments({ payer_id: userObj });
-		const tyftb_received = await TYFTB.countDocuments({ receiver_id: userObj });
-		const M2Ms = await OneToOneMeeting.countDocuments({ created_by: userObj });
-		const Visitors = await Visitor.countDocuments({ inviting_member_id: userObj });
+		const referral_given = await Referral.countDocuments({ referrer_id: userObj._id });
+		const referral_received = await Referral.countDocuments({ referee_id: userObj._id });
+		const tyftb_given = await TYFTB.countDocuments({ payer_id: userObj._id });
+		const tyftb_received = await TYFTB.countDocuments({ receiver_id: userObj._id });
+		const M2Ms = await OneToOneMeeting.countDocuments({ created_by: userObj._id });
+		const Visitors = await Visitor.countDocuments({ inviting_member_id: userObj._id });
 		const result = await TYFTB.aggregate([
-			{ $match: { receiver_id: userObj } },
+			{ $match: { receiver_id: userObj._id } },
 			{ $group: { _id: null, totalBusiness: { $sum: "$business_amount" } } }
 		]);
 
@@ -280,6 +280,34 @@ router.post(
       });
     } catch (error) {
       console.error("SearchUser Error:", error);
+      return res.status(500).json({ error: "Internal Server Error." });
+    }
+  }
+);
+
+router.post(
+  '/searchchapter',
+  authenticateCookie,
+  searchUserValidator,
+  handleValidationErrors,
+  async (req, res) => {
+    try {
+      const { substr } = req.body;
+      
+      if (!substr || substr.trim() === "") {
+        return res.status(400).json({ error: "Search substring required." });
+      }
+
+      const matchedChapters = await Chapter.find({
+        chapter_name: { $regex: substr.trim(), $options: "i" }
+      })
+        .select("chapter_name")
+        .limit(10);
+
+      return res.status(200).json({
+        results: matchedChapters.map(c => ( c.chapter_name ))
+      });
+    } catch (error) {
       return res.status(500).json({ error: "Internal Server Error." });
     }
   }
