@@ -125,7 +125,12 @@ router.get('/getactivity', authenticateCookie, async (req, res) => {
 		const referral_received = await Referral.countDocuments({ referee_id: userObj._id });
 		const tyftb_given = await TYFTB.countDocuments({ payer_id: userObj._id });
 		const tyftb_received = await TYFTB.countDocuments({ receiver_id: userObj._id });
-		const M2Ms = await OneToOneMeeting.countDocuments({ created_by: userObj._id });
+		const M2Ms = await OneToOneMeeting.countDocuments({
+			$or: [
+				{ member1_id: userObj._id },
+				{ member2_id: userObj._id }
+			]
+		});
 		const Visitors = await Visitor.countDocuments({ inviting_member_id: userObj._id });
 		const result = await TYFTB.aggregate([
 			{ $match: { receiver_id: userObj._id } },
@@ -142,175 +147,177 @@ router.get('/getactivity', authenticateCookie, async (req, res) => {
 
 router.get('/weekstats', authenticateCookie, async (req, res) => {
 	try {
-		const userId = req.user && req.user.uid;
+		const userId = req.user?.uid;
 		if (!userId) {
 			return res.status(400).json({ error: "Missing user id." });
 		}
+
 		const userObj = await User.findOne({ user_id: userId });
+		if (!userObj) {
+			return res.status(404).json({ error: "User not found." });
+		}
+
 		const referral_given = await Referral.aggregate([
 			{
-				'$match': {
-					'referee_id': userObj._id
+				$match: {
+					referrer_id: userObj._id
 				}
-			}, {
-				'$group': {
-					'_id': {
-						'week': {
-							'$week': '$created_at'
-						},
-						'year': {
-							'$year': '$created_at'
-						}
+			},
+			{
+				$group: {
+					_id: {
+						week: { $week: "$created_at" },
+						year: { $year: "$created_at" }
 					},
-					'count': {
-						'$sum': 1
-					}
+					count: { $sum: 1 }
 				}
-			}, {
-				'$sort': {
-					'_id.year': 1,
-					'_id.week': 1
-				}
-			}
-		])
+			},
+			{ $sort: { "_id.year": 1, "_id.week": 1 } }
+		]);
+
 		const tyftb_given = await TYFTB.aggregate([
 			{
-				'$match': {
-					'payer_id': userObj._id
+				$match: {
+					payer_id: userObj._id
 				}
-			}, {
-				'$group': {
-					'_id': {
-						'week': {
-							'$week': '$created_at'
-						},
-						'year': {
-							'$year': '$created_at'
-						}
+			},
+			{
+				$group: {
+					_id: {
+						week: { $week: "$created_at" },
+						year: { $year: "$created_at" }
 					},
-					'count': {
-						'$sum': 1
-					}
+					count: { $sum: 1 }
 				}
-			}, {
-				'$sort': {
-					'_id.year': 1,
-					'_id.week': 1
-				}
-			}
-		])
+			},
+			{ $sort: { "_id.year": 1, "_id.week": 1 } }
+		]);
 
 		const M2M = await OneToOneMeeting.aggregate([
 			{
-				'$match': {
-					'payer_id': userObj._id
+				$match: {
+					$or: [
+						{ member1_id: userObj._id },
+						{ member2_id: userObj._id }
+					]
 				}
-			}, {
-				'$group': {
-					'_id': {
-						'week': {
-							'$week': '$created_at'
-						},
-						'year': {
-							'$year': '$created_at'
-						}
+			},
+			{
+				$group: {
+					_id: {
+						week: { $week: "$meeting_date" },
+						year: { $year: "$meeting_date" }
 					},
-					'count': {
-						'$sum': 1
-					}
+					count: { $sum: 1 }
 				}
-			}, {
-				'$sort': {
-					'_id.year': 1,
-					'_id.week': 1
-				}
-			}
-		])
+			},
+			{ $sort: { "_id.year": 1, "_id.week": 1 } }
+		]);
 
-		res.json({ referral_given, tyftb_given, M2M });
+		const visitors = await Visitor.aggregate([
+			{
+				$match: {
+					inviting_member_id: userObj._id
+				}
+			},
+			{
+				$group: {
+					_id: {
+						week: { $week: "$createdAt" },
+						year: { $year: "$createdAt" }
+					},
+					count: { $sum: 1 }
+				}
+			},
+			{ $sort: { "_id.year": 1, "_id.week": 1 } }
+		]);
+
+		res.json({ referral_given, tyftb_given, M2M, visitors });
+
 	} catch (error) {
+		console.error("Week Stats Error:", error);
 		res.status(500).json({ error: "Could not fetch week stats." });
 	}
 });
 
 router.post(
-  '/searchuser',
-  authenticateCookie,
-  searchUserValidator,
-  handleValidationErrors,
-  async (req, res) => {
-    try {
-      const { substr } = req.body;
-      const userUid = req.user?.uid;
+	'/searchuser',
+	authenticateCookie,
+	searchUserValidator,
+	handleValidationErrors,
+	async (req, res) => {
+		try {
+			const { substr } = req.body;
+			const userUid = req.user?.uid;
 
-      if (!userUid) {
-        return res.status(400).json({ error: "Missing user id." });
-      }
+			if (!userUid) {
+				return res.status(400).json({ error: "Missing user id." });
+			}
 
-      if (!substr || substr.trim() === "") {
-        return res.status(400).json({ error: "Search substring required." });
-      }
+			if (!substr || substr.trim() === "") {
+				return res.status(400).json({ error: "Search substring required." });
+			}
 
-      const userObj = await User.findOne({ user_id: userUid });
-      if (!userObj) {
-        return res.status(404).json({ error: "User not found." });
-      }
+			const userObj = await User.findOne({ user_id: userUid });
+			if (!userObj) {
+				return res.status(404).json({ error: "User not found." });
+			}
 
-      const membership = await Membership.findOne({ user_id: userObj._id });
-      if (!membership?.chapter_id) {
-        return res.status(404).json({ error: "Membership or chapter not found." });
-      }
+			const membership = await Membership.findOne({ user_id: userObj._id });
+			if (!membership?.chapter_id) {
+				return res.status(404).json({ error: "Membership or chapter not found." });
+			}
 
-      const sameChapterMemberships = await Membership.find({
-        chapter_id: membership.chapter_id,
-      }).select("user_id");
+			const sameChapterMemberships = await Membership.find({
+				chapter_id: membership.chapter_id,
+			}).select("user_id");
 
-      const memberIds = sameChapterMemberships.map(m => m.user_id);
+			const memberIds = sameChapterMemberships.map(m => m.user_id);
 
-      const matchedUsers = await User.find({
-        _id: { $in: memberIds },
-        username: { $regex: substr.trim(), $options: "i" },
-        _id: { $ne: userObj._id }
-      })
-        .select("username")
-        .limit(10);
+			const matchedUsers = await User.find({
+				_id: { $in: memberIds },
+				username: { $regex: substr.trim(), $options: "i" },
+				_id: { $ne: userObj._id }
+			})
+				.select("username")
+				.limit(10);
 
-      return res.status(200).json({
-        results: matchedUsers.map(u => ( u.username ))
-      });
-    } catch (error) {
-      console.error("SearchUser Error:", error);
-      return res.status(500).json({ error: "Internal Server Error." });
-    }
-  }
+			return res.status(200).json({
+				results: matchedUsers.map(u => (u.username))
+			});
+		} catch (error) {
+			console.error("SearchUser Error:", error);
+			return res.status(500).json({ error: "Internal Server Error." });
+		}
+	}
 );
 
 router.post(
-  '/searchchapter',
-  authenticateCookie,
-  searchUserValidator,
-  handleValidationErrors,
-  async (req, res) => {
-    try {
-      const { substr } = req.body;
-      
-      if (!substr || substr.trim() === "") {
-        return res.status(400).json({ error: "Search substring required." });
-      }
+	'/searchchapter',
+	authenticateCookie,
+	searchUserValidator,
+	handleValidationErrors,
+	async (req, res) => {
+		try {
+			const { substr } = req.body;
 
-      const matchedChapters = await Chapter.find({
-        chapter_name: { $regex: substr.trim(), $options: "i" }
-      })
-        .select("chapter_name")
-        .limit(10);
+			if (!substr || substr.trim() === "") {
+				return res.status(400).json({ error: "Search substring required." });
+			}
 
-      return res.status(200).json({
-        results: matchedChapters.map(c => ( c.chapter_name ))
-      });
-    } catch (error) {
-      return res.status(500).json({ error: "Internal Server Error." });
-    }
-  }
+			const matchedChapters = await Chapter.find({
+				chapter_name: { $regex: substr.trim(), $options: "i" }
+			})
+				.select("chapter_name")
+				.limit(10);
+
+			return res.status(200).json({
+				results: matchedChapters.map(c => (c.chapter_name))
+			});
+		} catch (error) {
+			return res.status(500).json({ error: "Internal Server Error." });
+		}
+	}
 );
 
 
