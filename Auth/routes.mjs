@@ -19,7 +19,7 @@ router.post("/signup", signupValidator, handleValidation, async (req, res) => {
   const dateJoined = req.body.date_joined ? new Date(req.body.date_joined) : new Date();
   try {
     const user = await admin.auth().createUser({ email, password, username });
-    const newUser = new User({ user_id: user.uid, email, username, phone_number, status, date_joined : dateJoined });
+    const newUser = new User({ user_id: user.uid, email, username, phone_number, status, date_joined: dateJoined });
     await newUser.save();
     return res.status(201).json({ message: "User created", uid: newUser._id });
   } catch (error) {
@@ -41,7 +41,7 @@ router.post("/sessionLogin", loginValidator, handleValidation, async (req, res) 
       maxAge: expiresIn,
       httpOnly: true,
       secure: true,
-      sameSite: "none",
+      sameSite: "None",
     });
     res.json({ message: "Session created" });
   } catch (error) {
@@ -69,7 +69,7 @@ router.put("/updateProfile", authenticateUser, updateProfileValidator, handleVal
   }
 });
 
-router.post("/resetPassword", resetPasswordValidator, handleValidation,authenticateUser,async (req, res) => {
+router.post("/resetPassword", resetPasswordValidator, handleValidation, authenticateUser, async (req, res) => {
   const { email } = req.body;
   try {
     const link = await admin.auth().generatePasswordResetLink(email);
