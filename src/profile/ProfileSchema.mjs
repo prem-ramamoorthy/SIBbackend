@@ -1,198 +1,183 @@
 import mongoose from 'mongoose';
 
-const { Schema, Types } = mongoose;
+const { Schema } = mongoose;
 
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const urlRegex = /^(https?:\/\/)([\w.-]+)(:[0-9]+)?(\/.*)?$/i;
-const gstRegex = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z]$/;
 
 const profileSchema = new Schema(
   {
     display_name: {
       type: String,
-      required: true,
       trim: true,
-      maxLength: 50
+      maxlength: 50,
+      default: null,
     },
     user_id: {
-      type: Types.ObjectId,
+      type: Schema.Types.ObjectId,
       ref: 'users',
       required: true,
-      index: true
+      index: true,
+      unique: true,
     },
     profile_image_url: {
       type: String,
       trim: true,
-      maxLength: 255,
+      maxlength: 255,
       validate: {
         validator: v => !v || urlRegex.test(v),
-        message: 'profile_image_url must be a valid URL'
-      }
+        message: 'profile_image_url must be a valid URL starting with http or https',
+      },
+      default: null,
     },
     company_phone: {
       type: String,
       trim: true,
-      maxLength: 20,
-      required: true
+      maxlength: 20,
+      default: null,
     },
     company_email: {
       type: String,
       trim: true,
       lowercase: true,
-      maxLength: 100,
-      required: true,
-      match: [emailRegex, 'company_email must be a valid email']
+      maxlength: 100,
+      match: [emailRegex, 'company_email must be a valid email'],
+      default: null,
     },
     company_address: {
       type: String,
-      required: true,
-      trim: true
+      trim: true,
+      default: null,
     },
     personal_address: {
       type: String,
-      required: true,
-      trim: true
+      trim: true,
+      default: null,
     },
     dob: {
       type: Date,
-      required: true
+      validate: {
+        validator: v => !v || v <= new Date(),
+        message: 'dob cannot be in the future',
+      },
+      default: null,
     },
     wedding_date: {
       type: Date,
-      required: true
+      validate: {
+        validator: v => !v || v <= new Date(),
+        message: 'wedding_date cannot be in the future',
+      },
+      default: null,
     },
     blood_group: {
       type: String,
-      required: true,
       trim: true,
-      maxLength: 5,
       enum: {
         values: ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'],
-        message: 'blood_group must be a valid type'
-      }
+        message: 'blood_group must be a valid type',
+      },
+      default: "A+",
     },
     vagai_category: {
       type: String,
-      required: true,
       trim: true,
-      maxLength: 100
+      maxlength: 100,
+      default: null,
     },
     kulam_category: {
       type: String,
-      required: true,
       trim: true,
-      maxLength: 100
+      maxlength: 100,
+      default: null,
     },
     native_place: {
       type: String,
-      required: true,
       trim: true,
-      maxLength: 100
+      maxlength: 100,
+      default: null,
     },
     kuladeivam: {
       type: String,
-      required: true,
       trim: true,
-      maxLength: 100
+      maxlength: 100,
+      default: null,
     },
     company_name: {
       type: String,
-      required: true,
       trim: true,
-      maxLength: 100
+      maxlength: 100,
+      default: null,
     },
-    vertical_id: {
-      type: Types.ObjectId,
-      ref: 'verticals',
-      required: true,
-      index: true
+
+    vertical_ids: {
+      type: [
+        {
+          type: Schema.Types.ObjectId,
+          ref: 'verticals',
+        },
+      ],
+      default: [],
     },
-    gst_number: {
-      type: String,
-      required: true,
-      trim: true,
-      uppercase: true,
-      maxLength: 20,
-      match: [gstRegex, 'gst_number must be a valid GSTIN (15 chars)']
-    },
+
     years_in_business: {
       type: Number,
-      required: true,
-      min: [0, 'years_in_business cannot be negative']
+      min: [0, 'years_in_business cannot be negative'],
+      default: null,
     },
     annual_turnover: {
       type: Number,
-      required: true,
-      min: [0, 'annual_turnover cannot be negative']
+      min: [0, 'annual_turnover cannot be negative'],
+      default: null,
     },
     website: {
       type: String,
       trim: true,
-      maxLength: 255,
-      required: true,
-      match: [urlRegex, 'website must be a valid URL starting with http or https']
+      maxlength: 255,
+      validate: {
+        validator: v => !v || urlRegex.test(v),
+        message: 'website must be a valid URL starting with http or https',
+      },
+      default: null,
     },
-    services_offered: {
-      type: String,
-      required: true,
-      trim: true
+
+    services: {
+      type: [String],
+      validate: {
+        validator: arr =>
+          !arr || arr.length === 0 || arr.every(s => typeof s === 'string' && s.trim().length > 0),
+        message: 'services must be an array of non-empty strings',
+      },
+      default: [],
     },
+
     ideal_referral: {
       type: String,
-      required: true,
-      trim: true
+      trim: true,
+      default: null,
     },
-    gains_goals: {
+
+    bio: {
       type: String,
-      required: true,
-      trim: true
+      trim: true,
+      default: null,
     },
-    gains_accomplishments: {
-      type: String,
-      required: true,
-      trim: true
-    },
-    gains_interests: {
-      type: String,
-      required: true,
-      trim: true
-    },
-    gains_networks: {
-      type: String,
-      required: true,
-      trim: true
-    },
-    gains_skills: {
-      type: String,
-      required: true,
-      trim: true
-    },
+
     elevator_pitch_30s: {
       type: String,
-      required: true,
-      trim: true
+      trim: true,
+      default: null,
     },
     why_sib: {
       type: String,
-      required: true,
-      trim: true
-    }
+      trim: true,
+      default: null,
+    },
   },
   {
-    timestamps: true
+    timestamps: true,
+    collection: 'profiles',
   }
 );
-
-profileSchema.index({ user_id: 1 }, { unique: true });
-profileSchema.index({ display_name: 1 }, { unique: false });
-profileSchema.index({ company_email: 1 }, { unique: false });
-
-profileSchema.path('dob').validate(function (v) {
-  return v <= new Date();
-}, 'dob cannot be in the future');
-
-profileSchema.path('wedding_date').validate(function (v) {
-  return v <= new Date();
-}, 'wedding_date cannot be in the future');
 
 export const MemberProfile = mongoose.model('profiles', profileSchema);

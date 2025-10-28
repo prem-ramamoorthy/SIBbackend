@@ -29,6 +29,7 @@ export async function mapNamesToIds(req, res, next) {
   try {
     if (typeof req.body.username === 'string' && req.body.username.trim()) {
       const user = await User.findOne({ username: req.body.username }).select('_id');
+      console.log(user._id, typeof user._id);
       if (!user) {
         return res.status(400).json({
           errors: [{ type: 'field', path: 'username', msg: 'User not found by username' }]
@@ -148,7 +149,7 @@ export async function mapNamesToIds(req, res, next) {
       delete req.body.payer_displayname;
     }
     if (typeof req.body.receiver_displayname === 'string' && req.body.receiver_displayname.trim()) {
-      const receiver = await User.findOne({ username : req.body.receiver_displayname }).select('_id');
+      const receiver = await User.findOne({ username: req.body.receiver_displayname }).select('_id');
       if (!receiver) {
         return res.status(400).json({
           errors: [{ type: 'field', path: 'receiver_displayname', msg: 'Receiver profile not found by display name' }]
@@ -162,3 +163,41 @@ export async function mapNamesToIds(req, res, next) {
     res.status(500).json({ error: e.message });
   }
 }
+
+import mongoose from 'mongoose';
+
+export const mapverticalIds = async (req, res, next) => {
+  try {
+    const { vertical_ids } = req.body;
+
+    if (!vertical_ids || !Array.isArray(vertical_ids) || vertical_ids.length === 0) {
+      return next();
+    }
+
+    const mappedVerticalIds = [];
+
+    for (const item of vertical_ids) {
+      if (mongoose.Types.ObjectId.isValid(item)) {
+        mappedVerticalIds.push(new mongoose.Types.ObjectId(item));
+        continue;
+      }
+
+      const verticalDoc = await Vertical.findOne({ vertical_name: item.trim() }).select('_id');
+
+      if (!verticalDoc) {
+        return res.status(400).json({
+          error: `Vertical '${item}' not found. Please provide a valid vertical name or ID.`
+        });
+      }
+
+      mappedVerticalIds.push(verticalDoc._id);
+    }
+
+    req.body.vertical_ids = mappedVerticalIds;
+    
+    next();
+  } catch (err) {
+    console.error('Error in mapNamesToIds:', err);
+    res.status(500).json({ error: `Server error while mapping vertical names to IDs ${err.message}` });
+  }
+};
