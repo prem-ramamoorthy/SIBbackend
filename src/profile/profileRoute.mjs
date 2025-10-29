@@ -1,6 +1,7 @@
 import express from 'express';
 import { MemberProfile } from './ProfileSchema.mjs';
 import User from '../../Auth/Schemas.mjs';
+import mongoose from 'mongoose';
 import {
   idValidation,
   createProfileValidation,
@@ -145,6 +146,7 @@ router.get('/getprofile', authenticateCookie, async (req, res) => {
       },
       {
         $project: {
+          _id : 1,
           display_name: 1,
           profile_image_url: 1,
           company_phone: 1,
@@ -185,13 +187,30 @@ router.get('/getprofile', authenticateCookie, async (req, res) => {
   }
 });
 
-router.get('/getprofilebyid/:id', authenticateCookie, async (req, res) => {
+router.get('/getprofilebyid/:id', async (req, res) => {
   try {
     const profileId = req.params.id;
+    const userId = req.query.user;
 
-    if (!mongoose.Types.ObjectId.isValid(profileId)) {
-      return res.status(400).json({ error: 'Invalid profile ID format' });
+    if (!profileId || !userId) {
+      return res.status(400).json({ error: 'Missing profile_id or user_id' });
     }
+
+    if (!mongoose.Types.ObjectId.isValid(profileId) || !mongoose.Types.ObjectId.isValid(userId)) {
+      return res.status(400).json({ error: 'Invalid ID format' });
+    }
+
+    const userObj = await User.findById(userId);
+    if (!userObj) {
+      return res.status(404).json({ error: 'User not found with UID' });
+    }
+
+    const membership = await Membership.findOne({ user_id: userObj._id });
+    if (!membership || !membership.chapter_id) {
+      return res.status(404).json({ error: "Membership or chapter not found." });
+    }
+
+    const chapter = await Chapter.findById(membership.chapter_id);
 
     const [doc] = await MemberProfile.aggregate([
       { $match: { _id: new mongoose.Types.ObjectId(profileId) } },
@@ -217,6 +236,7 @@ router.get('/getprofilebyid/:id', authenticateCookie, async (req, res) => {
 
       {
         $project: {
+          _id : 1,
           display_name: 1,
           profile_image_url: 1,
           company_phone: 1,
@@ -241,7 +261,7 @@ router.get('/getprofilebyid/:id', authenticateCookie, async (req, res) => {
           why_sib: 1,
           createdAt: 1,
           updatedAt: 1,
-          user: { _id: 1, name: 1, email: 1 },
+          user: { _id: 1, name: 1, email: 1 , username : 1},
           verticals: { _id: 1, vertical_name: 1, vertical_code: 1 }
         }
       }
@@ -251,11 +271,14 @@ router.get('/getprofilebyid/:id', authenticateCookie, async (req, res) => {
       return res.status(404).json({ message: 'Profile not found' });
     }
 
+    doc.chaptername = chapter ? chapter.chapter_name : null;
+
     res.status(200).json(doc);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
+
 
 router.put(
   '/updateprofile',
