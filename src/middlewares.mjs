@@ -185,6 +185,12 @@ export const mapverticalIds = async (req, res, next) => {
       const verticalDoc = await Vertical.findOne({ vertical_name: item.trim() }).select('_id');
 
       if (!verticalDoc) {
+        // If caller passed an object like { vertical_name: "IT" }, convert it to the name string
+        if (item && typeof item === 'object' && typeof item.vertical_name === 'string' && item.vertical_name.trim()) {
+          mappedVerticalIds.push(item.vertical_name.trim());
+          continue;
+        }
+
         return res.status(400).json({
           error: `Vertical '${item}' not found. Please provide a valid vertical name or ID.`
         });

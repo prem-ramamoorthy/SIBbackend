@@ -3,7 +3,6 @@ import mongoose from 'mongoose';
 const { Schema } = mongoose;
 
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const urlRegex = /^(https?:\/\/)([\w.-]+)(:[0-9]+)?(\/.*)?$/i;
 
 const profileSchema = new Schema(
   {
@@ -134,10 +133,6 @@ const profileSchema = new Schema(
       type: String,
       trim: true,
       maxlength: 255,
-      validate: {
-        validator: v => !v || urlRegex.test(v),
-        message: 'website must be a valid URL starting with http or https',
-      },
       default: null,
     },
 

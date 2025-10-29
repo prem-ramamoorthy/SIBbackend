@@ -5,7 +5,8 @@ import mongoose from 'mongoose';
 import {
   idValidation,
   createProfileValidation,
-  updateProfileValidation
+  updateProfileValidation,
+  searchUserValidator
 } from './validator.mjs';
 import {
   authenticateCookie,
@@ -15,6 +16,7 @@ import {
 } from '../middlewares.mjs';
 import pageRouter from './profilepagereqiests.mjs';
 import { Chapter,Membership } from '../chapter/ChapterSchema.mjs';
+import { Vertical } from '../Admin/AdminSchemas.mjs';
 
 const router = express.Router();
 router.use(pageRouter);
@@ -172,12 +174,18 @@ router.get('/getprofile', authenticateCookie, async (req, res) => {
           createdAt: 1,
           updatedAt: 1,
           user: { _id: 1, name: 1, email: 1, username: 1 },
-          verticals: { _id: 1, vertical_name: 1, vertical_code: 1 }
+          verticals: {vertical_name: 1}
         }
       }
     ]);
 
     if (!doc) return res.status(404).json({ message: 'Profile not found' });
+    
+    if (doc.verticals) {
+      doc.vertical_names = doc.verticals.map(v => v.vertical_name)
+    } else {
+      doc.vertical_names = [];
+    }
 
     doc.chaptername = chapter ? chapter.chapter_name : null;
 
@@ -262,13 +270,19 @@ router.get('/getprofilebyid/:id', async (req, res) => {
           createdAt: 1,
           updatedAt: 1,
           user: { _id: 1, name: 1, email: 1 , username : 1},
-          verticals: { _id: 1, vertical_name: 1, vertical_code: 1 }
+          verticals: {vertical_name: 1}
         }
       }
     ]);
 
     if (!doc) {
       return res.status(404).json({ message: 'Profile not found' });
+    }
+
+    if (doc.verticals) {
+      doc.vertical_names = doc.verticals.map(v => v.vertical_name)
+    } else {
+      doc.vertical_names = [];
     }
 
     doc.chaptername = chapter ? chapter.chapter_name : null;
@@ -279,10 +293,10 @@ router.get('/getprofilebyid/:id', async (req, res) => {
   }
 });
 
-
 router.put(
   '/updateprofile',
   updateProfileValidation,
+  handleValidationErrors,
   authenticateCookie,
   mapNamesToIds,
   mapverticalIds,
@@ -316,6 +330,7 @@ router.put(
         return res.status(404).json({ message: 'Profile not found' });
       res.status(200).json(updated);
     } catch (err) {
+      console.log(err)
       res.status(500).json({ error: err.message });
     }
   }
@@ -334,6 +349,33 @@ router.delete(
       res.status(200).json({ message: 'Profile deleted successfully' });
     } catch (err) {
       res.status(500).json({ error: err.message });
+    }
+  }
+);
+
+router.post(
+  '/searchvertical',
+  searchUserValidator,
+  handleValidationErrors,
+  async (req, res) => {
+    try {
+      const { substr } = req.body;
+
+      if (!substr || substr.trim() === "") {
+        return res.status(400).json({ error: "Search substring required." });
+      }
+
+      const matchedChapters = await Vertical.find({
+        vertical_name: { $regex: substr.trim(), $options: "i" }
+      })
+        .select("vertical_name")
+        .limit(10);
+
+      return res.status(200).json({
+        results: matchedChapters.map(c => (c.vertical_name))
+      });
+    } catch (error) {
+      return res.status(500).json({ error: "Internal Server Error." });
     }
   }
 );

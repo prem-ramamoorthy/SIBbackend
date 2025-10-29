@@ -85,7 +85,6 @@ export const createProfileValidation = [
 
   body('website')
     .optional({ checkFalsy: true })
-    .isURL()
     .isLength({ max: 255 })
     .withMessage('website must be a valid URL starting with http or https'),
 
@@ -102,11 +101,6 @@ export const createProfileValidation = [
 ];
 
 export const updateProfileValidation = [
-  param('id')
-    .bail()
-    .isMongoId()
-    .withMessage('Invalid profile id'),
-
   body('display_name').optional({ checkFalsy: true }).isString().isLength({ max: 50 }),
   body('profile_image_url').optional({ checkFalsy: true }).isURL(),
   body('company_phone').optional({ checkFalsy: true }).isString().isLength({ max: 20 }),
@@ -144,7 +138,7 @@ export const updateProfileValidation = [
 
   body('years_in_business').optional({ checkFalsy: true }).isInt({ min: 0 }),
   body('annual_turnover').optional({ checkFalsy: true }).isInt({ min: 0 }),
-  body('website').optional({ checkFalsy: true }).isURL().isLength({ max: 255 }),
+  body('website').optional({ checkFalsy: true }).isLength({ max: 255 }),
 
   body('services')
     .optional({ checkFalsy: true })
@@ -156,4 +150,19 @@ export const updateProfileValidation = [
   body('bio').optional({ checkFalsy: true }).isString(),
   body('elevator_pitch_30s').optional({ checkFalsy: true }).isString(),
   body('why_sib').optional({ checkFalsy: true }).isString(),
+];
+
+export const searchUserValidator = [
+  body("substr")
+    .exists().withMessage("Search substring (substr) is required.")
+    .bail()
+    .isString().withMessage("Search substring must be a string.")
+    .bail()
+    .trim()
+    .notEmpty().withMessage("Search substring cannot be empty.")
+    .bail()
+    .isLength({ max: 50 }).withMessage("Search substring too long (max 50 chars).")
+    .bail()
+    .matches(/^[a-zA-Z0-9@._\s-]+$/)
+    .withMessage("Invalid characters. Use letters, numbers, spaces, or @._- only.")
 ];

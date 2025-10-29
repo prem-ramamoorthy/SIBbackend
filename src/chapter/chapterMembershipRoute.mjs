@@ -129,7 +129,6 @@ router.put(
   }
 );
 
-
 router.delete('/deletemembershipbyid/:id',authenticateCookie, idValidation, handleValidationErrors, async (req, res) => {
   try {
     const deleted = await Membership.findByIdAndDelete(req.params.id);
