@@ -1,33 +1,33 @@
 import express from 'express';
 import { Chapter } from './ChapterSchema.mjs';
 import { createChapterValidation, updateChapterValidation, idValidation } from './validator.mjs';
-import { handleValidationErrors, authenticateCookie } from '../middlewares.mjs';
+import { handleValidationErrors, authenticateCookie} from '../middlewares.mjs';
 import { Region } from '../Admin/AdminSchemas.mjs';
 import mongoose from 'mongoose';
 
 const router = express.Router();
 
 router.post('/createchapter', createChapterValidation, handleValidationErrors, authenticateCookie,
-    async (req, res) => {
-        try {
-            const region = await Region.findOne({ region_name: req.body.region_name }).select('_id');
-            if (!region) {
-                return res.status(400).json({
-                    errors: [{ type: 'field', path: 'region_name', msg: 'Region not found by name' }]
-                });
-            }
-            req.body.region_id = region._id;
-            delete req.body.region_name;
-            const chapter = new Chapter(req.body);
-            const saved = await chapter.save();
-            res.status(201).json(saved);
-        } catch (err) {
-            res.status(500).json({ error: err.message });
-        }
+  async (req, res) => {
+    try {
+      const region = await Region.findOne({ region_name: req.body.region_name }).select('_id');
+      if (!region) {
+        return res.status(400).json({
+          errors: [{ type: 'field', path: 'region_name', msg: 'Region not found by name' }]
+        });
+      }
+      req.body.region_id = region._id;
+      delete req.body.region_name;
+      const chapter = new Chapter(req.body);
+      const saved = await chapter.save();
+      res.status(201).json(saved);
+    } catch (err) {
+      res.status(500).json({ error: err.message });
     }
+  }
 );
 
-router.get('/getallchapters', async (req, res) => {
+router.get('/getallchapters', authenticateCookie ,async (req, res) => {
   try {
     const chapters = await Chapter.aggregate([
       { $sort: { founded_date: -1 } },
@@ -140,13 +140,13 @@ router.put(
 
 
 router.delete('/deletechapterbyid/:id', idValidation, handleValidationErrors, authenticateCookie, async (req, res) => {
-    try {
-        const deleted = await Chapter.findByIdAndDelete(req.params.id);
-        if (!deleted) return res.status(404).json({ message: 'Chapter not found' });
-        res.status(200).json({ message: 'Chapter deleted successfully' });
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
+  try {
+    const deleted = await Chapter.findByIdAndDelete(req.params.id);
+    if (!deleted) return res.status(404).json({ message: 'Chapter not found' });
+    res.status(200).json({ message: 'Chapter deleted successfully' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 export default router;

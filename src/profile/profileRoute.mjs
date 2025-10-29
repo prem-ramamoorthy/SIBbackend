@@ -13,6 +13,7 @@ import {
   mapverticalIds
 } from '../middlewares.mjs';
 import pageRouter from './profilepagereqiests.mjs';
+import { Chapter,Membership } from '../chapter/ChapterSchema.mjs';
 
 const router = express.Router();
 router.use(pageRouter);
@@ -116,6 +117,13 @@ router.get('/getprofile', authenticateCookie, async (req, res) => {
       return res.status(404).json({ error: 'User not found with UID' });
     }
 
+    const membership = await Membership.findOne({ user_id: userObj._id });
+    if (!membership || !membership.chapter_id) {
+      return res.status(404).json({ error: "Membership or chapter not found." });
+    }
+
+    const chapter = await Chapter.findById(membership.chapter_id);
+
     const [doc] = await MemberProfile.aggregate([
       { $match: { user_id: userObj._id } },
       {
@@ -161,13 +169,16 @@ router.get('/getprofile', authenticateCookie, async (req, res) => {
           why_sib: 1,
           createdAt: 1,
           updatedAt: 1,
-          user: { _id: 1, name: 1, email: 1 },
+          user: { _id: 1, name: 1, email: 1, username: 1 },
           verticals: { _id: 1, vertical_name: 1, vertical_code: 1 }
         }
       }
     ]);
 
-    if (!doc) return res.status(201).json({ message: 'Profile not found' });
+    if (!doc) return res.status(404).json({ message: 'Profile not found' });
+
+    doc.chaptername = chapter ? chapter.chapter_name : null;
+
     res.status(200).json(doc);
   } catch (err) {
     res.status(500).json({ error: err.message });
