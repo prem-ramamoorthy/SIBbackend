@@ -179,7 +179,7 @@ router.get('/getprofile', authenticateCookie, async (req, res) => {
       }
     ]);
 
-    if (!doc) return res.status(404).json({ message: 'Profile not found' });
+    if (!doc) return res.status(200).json({ message: 'Profile not found' });
     
     if (doc.verticals) {
       doc.vertical_names = doc.verticals.map(v => v.vertical_name)
