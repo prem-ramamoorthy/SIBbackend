@@ -1,4 +1,5 @@
 import admin from "../Auth/firebase.mjs";
+import mongoose from 'mongoose';
 import { validationResult } from 'express-validator';
 import { Vertical } from '../src/Admin/AdminSchemas.mjs';
 import User from "../Auth/Schemas.mjs";
@@ -27,9 +28,27 @@ export function handleValidationErrors(req, res, next) {
 
 export async function mapNamesToIds(req, res, next) {
   try {
+    if (typeof req.body.receiver === 'string' && req.body.receiver.trim()) {
+      const user = await User.findOne({ username: req.body.receiver }).select('_id');
+      if (!user) {
+        return res.status(400).json({
+          errors: [{ type: 'field', path: 'receiver', msg: 'User not found by username' }]
+        });
+      }
+      req.body.receiver = user._id;
+    }
+
+    if (typeof req.body.sender === 'string' && req.body.sender.trim()) {
+      const user = await User.findOne({ username: req.body.sender }).select('_id');
+      if (!user) {
+        return res.status(400).json({
+          errors: [{ type: 'field', path: 'sender', msg: 'User not found by username' }]
+        });
+      }
+      req.body.sender = user._id;
+    }
     if (typeof req.body.username === 'string' && req.body.username.trim()) {
       const user = await User.findOne({ username: req.body.username }).select('_id');
-      console.log(user._id, typeof user._id);
       if (!user) {
         return res.status(400).json({
           errors: [{ type: 'field', path: 'username', msg: 'User not found by username' }]
@@ -164,8 +183,6 @@ export async function mapNamesToIds(req, res, next) {
   }
 }
 
-import mongoose from 'mongoose';
-
 export const mapverticalIds = async (req, res, next) => {
   try {
     const { vertical_ids } = req.body;
@@ -185,7 +202,6 @@ export const mapverticalIds = async (req, res, next) => {
       const verticalDoc = await Vertical.findOne({ vertical_name: item.trim() }).select('_id');
 
       if (!verticalDoc) {
-        // If caller passed an object like { vertical_name: "IT" }, convert it to the name string
         if (item && typeof item === 'object' && typeof item.vertical_name === 'string' && item.vertical_name.trim()) {
           mappedVerticalIds.push(item.vertical_name.trim());
           continue;
@@ -200,7 +216,7 @@ export const mapverticalIds = async (req, res, next) => {
     }
 
     req.body.vertical_ids = mappedVerticalIds;
-    
+
     next();
   } catch (err) {
     console.error('Error in mapNamesToIds:', err);
