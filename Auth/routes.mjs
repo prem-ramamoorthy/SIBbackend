@@ -11,6 +11,7 @@ import {
 } from "./validator.mjs";
 import transporter from "./transporter.mjs";
 import User from './Schemas.mjs'
+import { authenticateCookie } from "../src/middlewares.mjs";
 
 const router = express.Router();
 
@@ -135,6 +136,19 @@ router.post("/updatePassword", updatePasswordValidator, handleValidation, async 
     const user = await admin.auth().getUserByEmail(email);
     await admin.auth().updateUser(user.uid, { password: newPassword });
     res.json({ message: "Password updated successfully" });
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+router.get("/getuser", authenticateCookie ,async (req, res) => {
+  try {
+    const userId = req.user && req.user.uid;
+    if (!userId) {
+      return res.status(400).json({ error: "Missing user id." });
+    }
+    const userObj = await User.findOne({ user_id: userId });
+    res.json(userObj);
   } catch (error) {
     res.status(400).json({ error: error.message });
   }
