@@ -34,6 +34,7 @@ router.post(
     async (req, res) => {
         try {
             const { receiver, sender, header, content, read, readAt } = req.body;
+            console.log(req.body)
             const notif = new Notification({ receiver, sender, header, content, read, readAt });
             await notif.save();
             res.status(201).json(notif);

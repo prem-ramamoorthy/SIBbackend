@@ -28,7 +28,6 @@ router.post("/signup", signupValidator, handleValidation, async (req, res) => {
   }
 });
 
-
 router.post("/sessionLogin", loginValidator, handleValidation, async (req, res) => {
   const idToken = req.body.idToken?.toString();
   const user_id = req.body.user_id?.toString();
