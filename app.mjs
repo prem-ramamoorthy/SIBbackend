@@ -17,6 +17,7 @@ import EventRouter from "./src/events/eventRoute.mjs";
 import DashboardRouter from "./src/dashboard/dashboardRoute.mjs";
 import NotificationRouter from './src/notifications/notificationRoute.mjs'
 
+
 connectDB() ;
 
 dotenv.config();
