@@ -21,6 +21,49 @@ import { Vertical } from '../Admin/AdminSchemas.mjs';
 const router = express.Router();
 router.use(pageRouter);
 
+router.post(
+  '/createprofile',
+  authenticateCookie,
+  mapNamesToIds,
+  createProfileValidation,
+  handleValidationErrors,
+  mapverticalIds,
+  async (req, res) => {
+    try {
+      const user_id = req.user.uid;
+      if (!user_id) {
+        return res.status(400).json({ error: "Missing user id." });
+      }
+
+      const userObj = await User.findOne({ user_id });
+      if (!userObj || !userObj._id) {
+        return res.status(404).json({ error: "User not found with UID" });
+      }
+
+      const membership = await Membership.findOne({ user_id: userObj._id });
+      if (!membership || !membership.chapter_id) {
+        return res.status(404).json({ error: "Membership or chapter not found." });
+      }
+
+      const chapter = await Chapter.findById(membership.chapter_id);
+      if (!chapter) {
+        return res.status(404).json({ error: "Chapter not found." });
+      }
+      req.body.chapter_id = chapter._id;
+      req.body.region_id = chapter.region_id;
+      req.body.user_id = userObj._id;
+      if (req.body.vertical_ids && !Array.isArray(req.body.vertical_ids)) {
+        req.body.vertical_ids = [req.body.vertical_ids];
+      }
+      const doc = new MemberProfile(req.body);
+      const saved = await doc.save();
+      res.status(201).json(saved);
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  }
+);
+
 router.get('/getallprofiles', authenticateCookie, async (req, res) => {
   try {
     const {
