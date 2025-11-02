@@ -62,7 +62,6 @@ router.get('/getallchapters', authenticateCookie ,async (req, res) => {
   }
 });
 
-
 router.get(
   '/getchapterbyid/:id',
   idValidation,
@@ -138,12 +137,21 @@ router.put(
   }
 );
 
-
 router.delete('/deletechapterbyid/:id', idValidation, handleValidationErrors, authenticateCookie, async (req, res) => {
   try {
     const deleted = await Chapter.findByIdAndDelete(req.params.id);
     if (!deleted) return res.status(404).json({ message: 'Chapter not found' });
     res.status(200).json({ message: 'Chapter deleted successfully' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.get('/getallchapternames', async (req, res) => {
+  try {
+    const chapters = await Chapter.find().sort({ founded_date: -1 }).select('chapter_name');
+    const chapterNames = chapters.map(ch => ch.chapter_name);
+    res.status(200).json(chapterNames);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

@@ -27,10 +27,11 @@ router.post(
   }
 );
 
-router.get('/getallregions', authenticateCookie, async (req, res) => {
+router.get('/getallregions', async (req, res) => {
   try {
-    const regions = await Region.find().sort({ created_at: -1 });
-    res.status(200).json(regions);
+    const regions = await Region.find().sort({ created_at: -1 }).select('region_name');
+    const regionNames = regions.map(r => r.region_name);
+    res.status(200).json(regionNames);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

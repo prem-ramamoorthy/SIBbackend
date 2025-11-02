@@ -16,8 +16,9 @@ router.post('/createvertical', createVerticalValidation, handleValidationErrors 
 
 router.get('/getallverticals', async (req, res) => {
   try {
-    const verticals = await Vertical.find().sort({ created_at: -1 });
-    res.status(200).json(verticals);
+    const verticals = await Vertical.find().sort({ created_at: -1 }).select("vertical_name");
+    const verticalNames = verticals.map(v => v.vertical_name);
+    res.status(200).json(verticalNames);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
