@@ -66,28 +66,11 @@ router.post(
 
 router.get('/getallprofiles', authenticateCookie, async (req, res) => {
   try {
-    const {
-      region,
-      chapter,
-      vertical,
-      sort,
-      myChapterOnly
-    } = req.query;
+    const { region, chapter, vertical, sort, myChapterOnly } = req.query;
 
-    const matchStage = {};
+    const pipeline = [];
 
-    if (region && region !== "All Regions") {
-      matchStage["region.region_name"] = region;
-    }
-    if (chapter && chapter !== "All Chapters") {
-      matchStage["chapter.chapter_name"] = chapter;
-    }
-    if (vertical && vertical !== "All Verticals") {
-      matchStage["verticals.vertical_name"] = vertical;
-    }
-    
-    const pipeline = [
-      { $sort: { createdAt: -1 } },
+    pipeline.push(
       {
         $lookup: {
           from: 'users',
@@ -99,20 +82,13 @@ router.get('/getallprofiles', authenticateCookie, async (req, res) => {
       { $unwind: { path: '$user', preserveNullAndEmptyArrays: true } },
       {
         $lookup: {
-          from: 'verticals',
-          localField: 'vertical_ids',
-          foreignField: '_id',
-          as: 'verticals'
-        }
-      },
-      {
-        $lookup: {
           from: 'chapters',
           localField: 'chapter_id',
           foreignField: '_id',
           as: 'chapter'
         }
       },
+      { $unwind: { path: '$chapter', preserveNullAndEmptyArrays: true } },
       {
         $lookup: {
           from: 'regions',
@@ -121,51 +97,94 @@ router.get('/getallprofiles', authenticateCookie, async (req, res) => {
           as: 'region'
         }
       },
+      { $unwind: { path: '$region', preserveNullAndEmptyArrays: true } },
       {
-        $addFields: {
-          chapter: { $ifNull: [ { $arrayElemAt: [ "$chapter.chapter_name", 0 ] }, null ] },
-          region: { $ifNull: [ { $arrayElemAt: [ "$region.region_name", 0 ] }, null ] },
-          verticals: { $ifNull: [ { $arrayElemAt: [ "$verticals.vertical_name", 0 ] }, null ] },
-          user: {
-            _id: "$user._id",
-            username: "$user.username"
-          }
-        }
-      },
-      ...(Object.keys(matchStage).length ? [{ $match: matchStage }] : []),
-      {
-        $project: {
-          display_name: 1,
-          profile_image_url: 1,
-          company_phone: 1,
-          company_email: 1,
-          company_address: 1,
-          blood_group: 1,
-          vagai_category: 1,
-          kulam_category: 1,
-          native_place: 1,
-          kuladeivam: 1,
-          company_name: 1,
-          user: 1,
-          verticals: 1,
-          chapter: 1,
-          region: 1
+        $lookup: {
+          from: 'verticals',
+          localField: 'vertical_ids',
+          foreignField: '_id',
+          as: 'verticals'
         }
       }
-    ];
+    );
 
-    if (sort) {
-      let sortConfig = {};
-      if (sort === "Name A-Z") sortConfig = { display_name: 1 };
-      else if (sort === "Name Z-A") sortConfig = { display_name: -1 };
-      else if (sort === "Chapter") sortConfig = { chapter: 1 };
-      else if (sort === "Region") sortConfig = { region: 1 };
-      pipeline.unshift({ $sort: sortConfig });
+    pipeline.push({
+      $addFields: {
+        chapter_name: '$chapter.chapter_name',
+        region_name: '$region.region_name',
+        vertical_names: {
+          $map: { input: "$verticals", as: "v", in: "$$v.vertical_name" }
+        },
+        username: '$user.username'
+      }
+    });
+
+    const matchStage = {};
+
+    if (region && region !== "All Regions") {
+      matchStage.region_name = { $regex: `^${region}$`, $options: 'i' };
     }
 
+    if (chapter && chapter !== "All Chapters") {
+      matchStage.chapter_name = { $regex: `^${chapter}$`, $options: 'i' };
+    }
+
+    if (vertical && vertical !== "All Verticals") {
+      matchStage.vertical_names = { $regex: `^${vertical}$`, $options: 'i' };
+    }
+
+    if (myChapterOnly === "true" && req.user?.chapter_id) {
+      matchStage.chapter_id = new mongoose.Types.ObjectId(req.user.chapter_id);
+    }
+
+    if (Object.keys(matchStage).length > 0) {
+      pipeline.push({ $match: matchStage });
+    }
+
+    let sortConfig = { createdAt: -1 };
+
+    if (sort === "Name A-Z") {
+      sortConfig = { username: 1 };
+    } else if (sort === "Name Z-A") {
+      sortConfig = { username: -1 };
+    } else if (sort === "Chapter") {
+      sortConfig = { chapter_name: 1, username: 1 };
+    } else if (sort === "Region") {
+      sortConfig = { region_name: 1, username: 1 };
+    }
+
+    pipeline.push({ $sort: sortConfig });
+
+    pipeline.push({
+      $project: {
+        _id: 1,
+        display_name: 1,
+        profile_image_url: 1,
+        company_phone: 1,
+        company_email: 1,
+        company_address: 1,
+        blood_group: 1,
+        vagai_category: 1,
+        kulam_category: 1,
+        native_place: 1,
+        kuladeivam: 1,
+        company_name: 1,
+        user: {
+          _id: "$user._id",
+          username: "$username"
+        },
+        verticals: "$vertical_names",
+        chapter: "$chapter_name",
+        region: "$region_name",
+        createdAt: 1
+      }
+    });
+
     const docs = await MemberProfile.aggregate(pipeline);
+
     res.status(200).json(docs);
   } catch (err) {
+    console.error('Error in /getallprofiles:', err);
     res.status(500).json({ error: err.message });
   }
 });
