@@ -16,7 +16,7 @@ import MemberRouter from "./src/members/memberRoute.mjs";
 import EventRouter from "./src/events/eventRoute.mjs";
 import DashboardRouter from "./src/dashboard/dashboardRoute.mjs";
 import NotificationRouter from './src/notifications/notificationRoute.mjs'
-
+import ActivityRouter from './src/activity/activityRoute.mjs'
 
 connectDB() ;
 
@@ -47,6 +47,7 @@ app.use('/member' , MemberRouter)
 app.use('/event', EventRouter)
 app.use('/dashboard', DashboardRouter)
 app.use('/notification', NotificationRouter)
+app.use('/activity' , ActivityRouter)
 
 app.get("/", (req, res) => {
   res.status(200).sendFile(path.join(__dirname, "index.html"));

@@ -5,19 +5,19 @@ const { Schema, Types } = mongoose;
 const oneToOneMeetingSchema = new Schema({
   member1_id: {
     type: Types.ObjectId,
-    ref: 'profiles',
+    ref: 'users',
     required: true,
     index: true
   },
   member2_id: {
     type: Types.ObjectId,
-    ref: 'profiles',
+    ref: 'users',
     required: true,
     index: true
   },
   chapter_id: {
     type: Types.ObjectId,
-    ref: 'Chapters',
+    ref: 'chapters',
     required: true,
     index: true
   },
@@ -37,7 +37,7 @@ const oneToOneMeetingSchema = new Schema({
   },
   created_by: {
     type: Types.ObjectId,
-    ref: 'User',
+    ref: 'users',
     required: true
   }
 },
@@ -60,45 +60,38 @@ const referralSchema = new Schema(
       required: [true, "Referrer ID is required"],
       index: true
     },
-
     referee_id: {
       type: Types.ObjectId,
       ref: "users",
       required: [true, "Referee ID is required"],
       index: true
     },
-
     contact_name: {
       type: String,
       trim: true,
       maxlength: 100
     },
-
     description: {
       type: String,
       required: [true, "Description is required"],
       trim: true
     },
-
     referral_type: {
       type: String,
       required: [true, "Referral type is required"],
       trim: true,
       maxlength: 20
     },
-
     referral_status: {
       type: [String],
       trim: true,
     },
-
     contact_phone: {
       type: String,
       required: [true, "Contact phone is required"],
       trim: true,
       maxlength: 20
     },
-
     contact_email: {
       type: String,
       trim: true,
@@ -108,26 +101,22 @@ const referralSchema = new Schema(
         "Please provide a valid email address"
       ]
     },
-
     contact_address: {
       type: String,
       trim: true,
       default: ""
     },
-
     comments: {
       type: String,
       trim: true,
       default: ""
     },
-
     hot: {
       type: String,
       required: [true, "Hot status is required"],
       trim: true,
       maxlength: 20
     },
-
     created_at: {
       type: Date,
       required: true,
@@ -148,7 +137,7 @@ export const Referral = mongoose.model("referrals", referralSchema);
 const visitorSchema = new Schema({
   inviting_member_id: {
     type: Types.ObjectId,
-    ref: 'profiles',
+    ref: 'users',
     required: true,
     index: true
   },
@@ -221,13 +210,13 @@ const tyftbSchema = new Schema({
   },
   payer_id: {
     type: Types.ObjectId,
-    ref: 'profiles',
+    ref: 'users',
     required: true,
     index: true
   },
   receiver_id: {
     type: Types.ObjectId,
-    ref: 'profiles',
+    ref: 'users',
     required: true,
     index: true
   },
