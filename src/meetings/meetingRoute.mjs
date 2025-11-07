@@ -1,38 +1,62 @@
 import express from 'express';
 import mongoose from 'mongoose';
 import { Meeting } from './MeetingsSchema.mjs';
-import AttendanceRouter  from './MeetigAttendanceRoute.mjs';
+import AttendanceRouter from './MeetigAttendanceRoute.mjs';
 import {
   idValidation,
   createMeetingValidation,
   updateMeetingValidation
 } from './validator.mjs';
-import { handleValidationErrors , authenticateCookie , mapNamesToIds } from '../middlewares.mjs';
+import { handleValidationErrors, authenticateCookie, mapNamesToIds } from '../middlewares.mjs';
+import User from '../../Auth/Schemas.mjs';
+import { Membership , Chapter } from '../chapter/ChapterSchema.mjs';
 
 const router = express.Router();
-router.use('/attendance' , AttendanceRouter )
+router.use('/attendance', AttendanceRouter)
 
-router.post(
-  '/createmeeting',
+router.post('/createmeeting',
   createMeetingValidation,
   handleValidationErrors,
   mapNamesToIds,
-  authenticateCookie ,
+  authenticateCookie,
   async (req, res) => {
+    const user_id = req.user.uid;
+    if (!user_id) {
+      return res.status(400).json({ error: "Missing user id." });
+    }
+
+    const userObj = await User.findOne({ user_id });
+    if (!userObj || !userObj._id) {
+      return res.status(404).json({ error: "User not found with UID" });
+    }
+
+    const membership = await Membership.findOne({ user_id: userObj._id });
+    if (!membership || !membership.chapter_id) {
+      return res.status(404).json({ error: "Membership or chapter not found." });
+    }
+
+    const chapter = await Chapter.findById(membership.chapter_id);
+    if (!chapter) {
+      return res.status(404).json({ error: "Chapter not found." });
+    }
+    req.body.chapter_id = chapter._id;
     try {
       if (!req.body.chapter_id) {
         return res.status(400).json({ message: 'Valid chapter_name is required.' });
       }
       const meeting = new Meeting(req.body);
       const saved = await meeting.save();
-      res.status(201).json(saved);
+      res.status(201).json({
+        message: "success",
+        id: saved._id
+      });
     } catch (err) {
       res.status(500).json({ error: err.message });
     }
   }
 );
 
-router.get('/getmeetings', authenticateCookie ,async (req, res) => {
+router.get('/getmeetings', authenticateCookie, async (req, res) => {
   try {
     const docs = await Meeting.aggregate([
       { $sort: { createdAt: -1 } },
@@ -50,6 +74,7 @@ router.get('/getmeetings', authenticateCookie ,async (req, res) => {
           meeting_date: 1,
           meeting_time: 1,
           meeting_type: 1,
+          title: 1,
           location: 1,
           agenda: 1,
           meeting_notes: 1,
@@ -70,7 +95,7 @@ router.get('/getmeetings', authenticateCookie ,async (req, res) => {
   }
 });
 
-router.get('/getmeetingbyid/:id', authenticateCookie ,idValidation, handleValidationErrors, async (req, res) => {
+router.get('/getmeetingbyid/:id', authenticateCookie, idValidation, handleValidationErrors, async (req, res) => {
   try {
     const [doc] = await Meeting.aggregate([
       { $match: { _id: new mongoose.Types.ObjectId(req.params.id) } },
@@ -88,6 +113,7 @@ router.get('/getmeetingbyid/:id', authenticateCookie ,idValidation, handleValida
           meeting_date: 1,
           meeting_time: 1,
           meeting_type: 1,
+          title: 1,
           location: 1,
           agenda: 1,
           meeting_notes: 1,
@@ -111,7 +137,7 @@ router.get('/getmeetingbyid/:id', authenticateCookie ,idValidation, handleValida
 
 router.put(
   '/updatemeetingbyid/:id',
-  authenticateCookie ,
+  authenticateCookie,
   updateMeetingValidation,
   handleValidationErrors,
   mapNamesToIds,
@@ -131,7 +157,7 @@ router.put(
   }
 );
 
-router.delete('/deletemeetingbyid/:id',authenticateCookie , idValidation, handleValidationErrors, async (req, res) => {
+router.delete('/deletemeetingbyid/:id', authenticateCookie, idValidation, handleValidationErrors, async (req, res) => {
   try {
     const deleted = await Meeting.findByIdAndDelete(req.params.id);
     if (!deleted)

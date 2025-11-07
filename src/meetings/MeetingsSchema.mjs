@@ -19,8 +19,18 @@ const meetingSchema = new Schema(
       required: true,
       trim: true
     },
+    title: {
+      type: String,
+      required: true,
+      trim: true,
+      maxLength: 200
+    },
     meeting_type: {
       type: String,
+      enum: {
+        values: ['weekly', 'monthly', 'others'],
+        message: 'meeting status must be a valid type',
+      },
       required: true,
       trim: true,
       maxLength: 50
@@ -30,39 +40,23 @@ const meetingSchema = new Schema(
       required: true,
       trim: true
     },
-    agenda: {
-      type: String,
-      required: true,
-      trim: true
-    },
     meeting_notes: {
       type: String,
-      required: true,
+      default: "",
       trim: true
     },
-    total_attendees: {
+    duration: {
       type: Number,
-      required: true,
-      min: 0
-    },
-    total_visitors: {
-      type: Number,
-      required: true,
-      min: 0
-    },
-    total_referrals: {
-      type: Number,
-      required: true,
-      min: 0
-    },
-    total_tyftb: {
-      type: Decimal128,
-      required: true,
-      get: v => (v ? parseFloat(v.toString()) : 0),
-      min: 0
+      min: 0,
+      required : true,
+      default: 0
     },
     meeting_status: {
-      type: Boolean,
+      type: String,
+      enum: {
+        values: ['completed', 'upcoming', 'cancelled', 'inprogress'],
+        message: 'meeting status must be a valid type',
+      },
       required: true,
       trim: true,
       maxLength: 20
@@ -113,11 +107,11 @@ const attendanceSchema = new Schema({
     default: Date.now
   }
 },
-{
-  timestamps: true,
-  toJSON: { getters: true },
-  toObject: { getters: true }
-});
+  {
+    timestamps: true,
+    toJSON: { getters: true },
+    toObject: { getters: true }
+  });
 
 attendanceSchema.index({ user_id: 1, created_at: 1 });
 

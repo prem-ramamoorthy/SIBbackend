@@ -17,7 +17,6 @@ const eventSchema = new Schema({
   },
   event_description: {
     type: String,
-    required: true,
     trim: true
   },
   event_date: {
@@ -40,39 +39,26 @@ const eventSchema = new Schema({
     trim: true,
     maxLength: 100
   },
-  vat_number: {
-    type: String,
-    required: true,
-    trim: true,
-    maxLength: 20
-  },
   event_type: {
     type: String,
     required: true,
+    enum: {
+      values: ['weekly', 'monthly', 'others'],
+      message: 'meeting status must be a valid type',
+    },
     trim: true,
     maxLength: 50
   },
-  max_attendees: {
-    type: Number,
-    required: true,
-    min: 0
-  },
-  current_attendees: {
-    type: Number,
-    required: true,
-    min: 0
-  },
   event_status: {
     type: String,
+    enum: {
+      values: ['completed', 'upcoming', 'cancelled', 'inprogress'],
+      message: 'meeting status must be a valid type',
+    },
     required: true,
     trim: true,
     maxLength: 20
   },
-  created_by: {
-    type: Types.ObjectId,
-    ref: 'users',
-    required: true
-  }
 }, {
   timestamps: true,
   toJSON: { getters: true },
