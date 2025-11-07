@@ -74,6 +74,7 @@ router.get('/getmeetings', authenticateCookie, async (req, res) => {
           meeting_date: 1,
           meeting_time: 1,
           meeting_type: 1,
+          duration : 1 ,
           title: 1,
           location: 1,
           meeting_notes: 1,

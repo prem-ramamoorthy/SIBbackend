@@ -68,16 +68,20 @@ router.get('/getupcomingevents', authenticateCookie, async (req, res) => {
 			return res.status(404).json({ error: "Membership or chapter not found." });
 		}
 
-		const events = await Event.find({ chapter_id: membership.chapter_id })
+		const events = await Event.find({
+			chapter_id: membership.chapter_id,
+			event_date: { $gte: new Date() },
+			event_status: "upcoming"
+		})
 			.sort({ event_date: 1 })
-			.limit(2);
+			.limit(1);
 
 		if (!events || events.length === 0) {
 			return res.status(200).json([]);
 		}
 
 		const response = events.map(event => ({
-			companyName: event.organizer_company ?? "",
+			companyName: event.event_title ?? "",
 			date: event.event_date ? formatDate(event.event_date) : "No upcoming event",
 			time: event.event_time ?? "",
 			VATnumber: event.vat_number ?? "",
@@ -321,86 +325,114 @@ router.post(
 );
 
 router.get('/getactivity/:timeline', authenticateCookie, async (req, res) => {
-  const timeline = String(req.params.timeline || 'full').toLowerCase(); // "full" | "6months" | "amonth"
-  try {
-    const userId = req.user && req.user.uid;
-    if (!userId) {
-      return res.status(400).json({ error: "Missing user id." });
-    }
+	const timeline = String(req.params.timeline || 'full').toLowerCase(); // "full" | "6months" | "amonth"
+	try {
+		const userId = req.user && req.user.uid;
+		if (!userId) {
+			return res.status(400).json({ error: "Missing user id." });
+		}
 
-    const userObj = await User.findOne({ user_id: userId }).lean();
+		const userObj = await User.findOne({ user_id: userId }).lean();
 
-    if (!userObj?._id) {
-      return res.status(404).json({ error: "User not found." });
-    }
+		if (!userObj?._id) {
+			return res.status(404).json({ error: "User not found." });
+		}
 
-    const now = new Date();
-    let startDate = null;
-    let endDate = now;
+		const now = new Date();
+		let startDate = null;
+		let endDate = now;
 
-    if (timeline === 'amonth') {
-      startDate = new Date();
-      startDate.setMonth(startDate.getMonth() - 1);
-    } else if (timeline === '6months') {
-      startDate = new Date();
-      startDate.setMonth(startDate.getMonth() - 6); 
-    } else if (timeline === 'full') {
-      startDate = null;
-      endDate = null;
-    }
+		if (timeline === 'amonth') {
+			startDate = new Date();
+			startDate.setMonth(startDate.getMonth() - 1);
+		} else if (timeline === '6months') {
+			startDate = new Date();
+			startDate.setMonth(startDate.getMonth() - 6);
+		} else if (timeline === 'full') {
+			startDate = null;
+			endDate = null;
+		}
 
-    const rangeFilter = startDate && endDate
-      ? { createdAt: { $gte: startDate, $lte: endDate } }
-      : {};
+		const rangeFilter = startDate && endDate
+			? { createdAt: { $gte: startDate, $lte: endDate } }
+			: {};
 
-    const referralGivenFilter = { referrer_id: userObj._id, ...rangeFilter };
-    const referralReceivedFilter = { referee_id: userObj._id, ...rangeFilter };
-    const tyftbGivenFilter = { payer_id: userObj._id, ...rangeFilter };
-    const tyftbReceivedFilter = { receiver_id: userObj._id, ...rangeFilter };
-    const m2mFilter = {
-      $or: [{ member1_id: userObj._id }, { member2_id: userObj._id }],
-      ...rangeFilter
-    };
-    const visitorsFilter = { inviting_member_id: userObj._id, ...rangeFilter };
+		const referralGivenFilter = { referrer_id: userObj._id, ...rangeFilter };
+		const referralReceivedFilter = { referee_id: userObj._id, ...rangeFilter };
+		const tyftbGivenFilter = { payer_id: userObj._id, ...rangeFilter };
+		const tyftbReceivedFilter = { receiver_id: userObj._id, ...rangeFilter };
+		const m2mFilter = {
+			$or: [{ member1_id: userObj._id }, { member2_id: userObj._id }],
+			...rangeFilter
+		};
+		const visitorsFilter = { inviting_member_id: userObj._id, ...rangeFilter };
 
-    const [
-      referral_given,
-      referral_received,
-      tyftb_given,
-      tyftb_received,
-      M2Ms,
-      Visitors,
-      businessAgg
-    ] = await Promise.all([
-      Referral.countDocuments(referralGivenFilter),
-      Referral.countDocuments(referralReceivedFilter),
-      TYFTB.countDocuments(tyftbGivenFilter),
-      TYFTB.countDocuments(tyftbReceivedFilter),
-      OneToOneMeeting.countDocuments(m2mFilter),
-      Visitor.countDocuments(visitorsFilter),
-      TYFTB.aggregate([
-        { $match: { receiver_id: userObj._id, ...(rangeFilter.createdAt ? rangeFilter : {}) } },
-        { $group: { _id: null, totalBusiness: { $sum: "$business_amount" } } }
-      ])
-    ]);
+		const [
+			referral_given,
+			referral_received,
+			tyftb_given,
+			tyftb_received,
+			M2Ms,
+			Visitors,
+			businessAgg
+		] = await Promise.all([
+			Referral.countDocuments(referralGivenFilter),
+			Referral.countDocuments(referralReceivedFilter),
+			TYFTB.countDocuments(tyftbGivenFilter),
+			TYFTB.countDocuments(tyftbReceivedFilter),
+			OneToOneMeeting.countDocuments(m2mFilter),
+			Visitor.countDocuments(visitorsFilter),
+			TYFTB.aggregate([
+				{ $match: { receiver_id: userObj._id, ...(rangeFilter.createdAt ? rangeFilter : {}) } },
+				{ $group: { _id: null, totalBusiness: { $sum: "$business_amount" } } }
+			])
+		]);
 
-    const business_made = (businessAgg[0]?.totalBusiness) || 0;
+		const business_made = (businessAgg[0]?.totalBusiness) || 0;
 
-    return res.status(200).json({
-      timeline,
-      date_range: startDate && endDate ? { start: startDate, end: endDate } : null,
-      referral_given,
-      referral_received,
-      tyftb_given,
-      tyftb_received,
-      business_made,
-      M2Ms,
-      Visitors
-    });
-  } catch (err) {
-    console.error('Error fetching activity:', err);
-    return res.status(500).json({ error: "Internal server error." });
-  }
+		return res.status(200).json({
+			timeline,
+			date_range: startDate && endDate ? { start: startDate, end: endDate } : null,
+			referral_given,
+			referral_received,
+			tyftb_given,
+			tyftb_received,
+			business_made,
+			M2Ms,
+			Visitors
+		});
+	} catch (err) {
+		console.error('Error fetching activity:', err);
+		return res.status(500).json({ error: "Internal server error." });
+	}
+});
+
+router.get('/caneditevents', authenticateCookie, async (req, res) => {
+	try {
+		const userId = req.user && req.user.uid;
+		if (!userId) {
+			return res.status(400).json({ error: "Missing user id." });
+		}
+
+		const userObj = await User.findOne({ user_id: userId }).lean();
+
+		if (!userObj?._id) {
+			return res.status(404).json({ error: "User not found." });
+		}
+		const membership = await Membership.findOne({ user_id: userObj._id });
+		if (!membership || !membership.chapter_id) {
+			return res.status(404).json({ error: "Membership or chapter not found." });
+		}
+		if(membership.role === "president" || membership.role === "admin"){
+			res.status(200).json({ hasaccess: true });
+		}
+		else{
+			res.status(200).json({ hasaccess: false });
+		}
+	} catch (err) {
+		console.error('Error fetching event access key', err);
+		return res.status(500).json({ error: "Internal server error." });
+	}
 });
 
 export default router;
