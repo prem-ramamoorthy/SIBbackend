@@ -76,12 +76,7 @@ router.get('/getmeetings', authenticateCookie, async (req, res) => {
           meeting_type: 1,
           title: 1,
           location: 1,
-          agenda: 1,
           meeting_notes: 1,
-          total_attendees: 1,
-          total_visitors: 1,
-          total_referrals: 1,
-          total_tyftb: 1,
           meeting_status: 1,
           createdAt: 1,
           updatedAt: 1,
@@ -136,21 +131,19 @@ router.get('/getmeetingbyid/:id', authenticateCookie, idValidation, handleValida
 });
 
 router.put(
-  '/updatemeetingbyid/:id',
+  '/updatemeeting',
   authenticateCookie,
-  updateMeetingValidation,
-  handleValidationErrors,
-  mapNamesToIds,
   async (req, res) => {
     try {
+      const id = req.body._id
       const updated = await Meeting.findByIdAndUpdate(
-        req.params.id,
+        id,
         req.body,
         { new: true, runValidators: true }
       );
       if (!updated)
         return res.status(404).json({ message: 'Meeting not found' });
-      res.status(200).json(updated);
+      res.status(200).json({message : "success" , id : updated._id});
     } catch (err) {
       res.status(500).json({ error: err.message });
     }

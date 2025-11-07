@@ -62,8 +62,6 @@ router.get('/getallevents', authenticateCookie, async (req, res) => {
             { $sort: { event_date: -1 } },
             { $lookup: { from: 'chapters', localField: 'chapter_id', foreignField: '_id', as: 'chapter' } },
             { $unwind: { path: '$chapter', preserveNullAndEmptyArrays: true } },
-            { $lookup: { from: 'users', localField: 'created_by', foreignField: '_id', as: 'created_by_user' } },
-            { $unwind: { path: '$created_by_user', preserveNullAndEmptyArrays: true } },
             {
                 $project: {
                     event_title: 1,
@@ -72,15 +70,11 @@ router.get('/getallevents', authenticateCookie, async (req, res) => {
                     event_time: 1,
                     location: 1,
                     organizer_company: 1,
-                    vat_number: 1,
                     event_type: 1,
-                    max_attendees: 1,
-                    current_attendees: 1,
                     event_status: 1,
                     createdAt: 1,
                     updatedAt: 1,
                     chapter: { _id: 1, chapter_name: 1, chapter_code: 1 },
-                    created_by_user: { _id: 1, username: 1, name: 1 }
                 }
             }
         ]);
@@ -126,19 +120,19 @@ router.get('/geteventbyid/:id', authenticateCookie, idValidation, handleValidati
 });
 
 router.put(
-    '/updateeventbyid/:id', authenticateCookie,
+    '/updateevent', authenticateCookie,
     updateEventValidation,
     handleValidationErrors,
-    mapNamesToIds,
     async (req, res) => {
         try {
+            const id = req.body._id ;
             const updated = await Event.findByIdAndUpdate(
-                req.params.id,
+                id,
                 req.body,
                 { new: true, runValidators: true }
             );
             if (!updated) return res.status(404).json({ message: 'Event not found' });
-            res.status(200).json(updated);
+            res.status(200).json({message : "success" , id : updated._id});
         } catch (err) {
             res.status(500).json({ error: err.message });
         }
