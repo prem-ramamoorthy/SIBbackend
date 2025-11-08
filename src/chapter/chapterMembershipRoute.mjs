@@ -1,5 +1,5 @@
 import express from 'express';
-import { Membership,Chapter } from './ChapterSchema.mjs';
+import { Membership, Chapter } from './ChapterSchema.mjs';
 import { handleValidationErrors, mapNamesToIds, authenticateCookie } from '../middlewares.mjs'
 import {
   idValidation,
@@ -19,14 +19,44 @@ router.post(
   mapNamesToIds,
   async (req, res) => {
     try {
-      if (!req.body.user_id || !req.body.chapter_id) {
-        return res.status(400).json({ message: 'Both valid username and chapter_name are required.' });
+      const user_id = req.user.uid;
+      if (!user_id) {
+        return res.status(400).json({ error: "Missing user id." });
       }
+
+      const userObj = await User.findOne({ user_id });
+      if (!userObj || !userObj._id) {
+        return res.status(404).json({ error: "User not found with UID" });
+      }
+
+      const usermembership = await Membership.findOne({ user_id: userObj._id });
+      if (!usermembership || !usermembership.chapter_id) {
+        return res.status(404).json({ error: "Membership or chapter not found." });
+      }
+
+      req.body.chapter_id = usermembership.chapter_id;
+
+      let newUserId = req.body.user_id;
+      if (!newUserId && req.body.username) {
+        const newUser = await User.findOne({ username: req.body.username });
+        if (!newUser) {
+          return res.status(404).json({ error: "Target user for membership not found." });
+        }
+        newUserId = newUser._id;
+        req.body.user_id = newUserId;
+      }
+      
+      if (!req.body.user_id || !req.body.chapter_id) {
+        return res.status(400).json({ message: 'Both valid user_id and chapter_id are required.' });
+      }
+
       const membership = new Membership(req.body);
       const saved = await membership.save();
-      res.status(201).json(saved);
+      return res.status(201).json(saved);
+
     } catch (err) {
-      res.status(500).json({ error: err.message });
+      console.log(err);
+      return res.status(500).json({ error: err.message });
     }
   }
 );

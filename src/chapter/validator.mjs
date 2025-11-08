@@ -35,7 +35,6 @@ export const idValidation = [
 
 export const createMembershipValidation = [
   body('username').isString().notEmpty(),
-  body('chapter_name').isString().notEmpty(),
   body('role').isString().isLength({ max: 50 }).notEmpty(),
   body('membership_status').isBoolean().notEmpty(),
   body('join_date').isISO8601().toDate().notEmpty(),
