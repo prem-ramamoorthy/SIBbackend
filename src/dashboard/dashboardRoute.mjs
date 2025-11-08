@@ -32,16 +32,38 @@ router.get('/getchapteroverview', authenticateCookie, async (req, res) => {
 			return res.status(404).json({ error: "Chapter not found." });
 		}
 
-		const meeting = await Meeting.findOne({
-			chapter_id: membership.chapter_id,
-			meeting_status: false,
-		}).sort({ meeting_date: 1 });
+		const now = new Date();
+		const [doc] = await Meeting.aggregate([
+			{
+				$match: {
+					meeting_status: "upcoming",
+					meeting_date: { $gte: now }
+				}
+			},
+			{ $sort: { meeting_date: 1, meeting_time: 1 } },
+			{ $limit: 1 },
+			{
+				$lookup: {
+					from: 'chapters',
+					localField: 'chapter_id',
+					foreignField: '_id',
+					as: 'chapter'
+				}
+			},
+			{ $unwind: { path: '$chapter', preserveNullAndEmptyArrays: true } },
+			{
+				$project: {
+					meeting_date: 1,
+					meeting_time: 1
+				}
+			}
+		]);
 
 		const summary = await ChapterSummary.findOne({ chapter_id: membership.chapter_id });
 
 		res.status(200).json({
 			chapterName: chapter.chapter_name ?? "",
-			nextMeeting: meeting?.meeting_date ? formatDate(meeting.meeting_date) : "No upcoming meeting",
+			nextMeeting: doc?.meeting_date ? formatDate(doc.meeting_date) : "No upcoming meeting",
 			totalMembers: chapter.current_member_count ?? 0,
 			totalRevenue: summary?.total_business ?? 0,
 			totalvisitors: summary?.visitors_total ?? 0,
@@ -423,10 +445,10 @@ router.get('/caneditevents', authenticateCookie, async (req, res) => {
 		if (!membership || !membership.chapter_id) {
 			return res.status(404).json({ error: "Membership or chapter not found." });
 		}
-		if(membership.role === "president" || membership.role === "admin"){
+		if (membership.role === "president" || membership.role === "admin") {
 			res.status(200).json({ hasaccess: true });
 		}
-		else{
+		else {
 			res.status(200).json({ hasaccess: false });
 		}
 	} catch (err) {
