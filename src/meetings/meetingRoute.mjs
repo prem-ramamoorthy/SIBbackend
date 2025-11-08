@@ -58,7 +58,27 @@ router.post('/createmeeting',
 
 router.get('/getmeetings', authenticateCookie, async (req, res) => {
   try {
+    const user_id = req.user.uid;
+    if (!user_id) {
+      return res.status(400).json({ error: "Missing user id." });
+    }
+
+    const userObj = await User.findOne({ user_id });
+    if (!userObj || !userObj._id) {
+      return res.status(404).json({ error: "User not found with UID" });
+    }
+
+    const membership = await Membership.findOne({ user_id: userObj._id });
+    if (!membership || !membership.chapter_id) {
+      return res.status(404).json({ error: "Membership or chapter not found." });
+    }
+
+    const chapter = await Chapter.findById(membership.chapter_id);
+    if (!chapter) {
+      return res.status(404).json({ error: "Chapter not found." });
+    }
     const docs = await Meeting.aggregate([
+      { $match: { chapter_id: chapter._id } },
       { $sort: { createdAt: -1 } },
       {
         $lookup: {

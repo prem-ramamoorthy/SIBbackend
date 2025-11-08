@@ -1,11 +1,12 @@
 import express from 'express';
-import { Membership} from './ChapterSchema.mjs';
-import {handleValidationErrors ,  mapNamesToIds , authenticateCookie} from '../middlewares.mjs'
+import { Membership,Chapter } from './ChapterSchema.mjs';
+import { handleValidationErrors, mapNamesToIds, authenticateCookie } from '../middlewares.mjs'
 import {
   idValidation,
   createMembershipValidation,
   updateMembershipValidation
 } from './validator.mjs';
+import User from '../../Auth/Schemas.mjs';
 import mongoose from 'mongoose';
 
 const router = express.Router();
@@ -15,7 +16,7 @@ router.post(
   authenticateCookie,
   createMembershipValidation,
   handleValidationErrors,
-   mapNamesToIds,
+  mapNamesToIds,
   async (req, res) => {
     try {
       if (!req.body.user_id || !req.body.chapter_id) {
@@ -30,9 +31,29 @@ router.post(
   }
 );
 
-router.get('/getallmemberships',authenticateCookie, async (req, res) => {
+router.get('/getallmemberships', authenticateCookie, async (req, res) => {
   try {
+    const user_id = req.user.uid;
+    if (!user_id) {
+      return res.status(400).json({ error: "Missing user id." });
+    }
+
+    const userObj = await User.findOne({ user_id });
+    if (!userObj || !userObj._id) {
+      return res.status(404).json({ error: "User not found with UID" });
+    }
+
+    const membership = await Membership.findOne({ user_id: userObj._id });
+    if (!membership || !membership.chapter_id) {
+      return res.status(404).json({ error: "Membership or chapter not found." });
+    }
+
+    const chapter = await Chapter.findById(membership.chapter_id);
+    if (!chapter) {
+      return res.status(404).json({ error: "Chapter not found." });
+    }
     const docs = await Membership.aggregate([
+      { $match: { chapter_id: chapter._id } },
       { $sort: { createdAt: -1 } },
       {
         $lookup: {
@@ -73,7 +94,7 @@ router.get('/getallmemberships',authenticateCookie, async (req, res) => {
   }
 });
 
-router.get('/getmembershipbyid/:id',authenticateCookie, idValidation, handleValidationErrors, async (req, res) => {
+router.get('/getmembershipbyid/:id', authenticateCookie, idValidation, handleValidationErrors, async (req, res) => {
   try {
     const [doc] = await Membership.aggregate([
       { $match: { _id: new mongoose.Types.ObjectId(req.params.id) } },
@@ -112,7 +133,7 @@ router.put(
   authenticateCookie,
   updateMembershipValidation,
   handleValidationErrors,
-   mapNamesToIds,
+  mapNamesToIds,
   async (req, res) => {
     try {
       const updated = await Membership.findByIdAndUpdate(
@@ -129,7 +150,7 @@ router.put(
   }
 );
 
-router.delete('/deletemembershipbyid/:id',authenticateCookie, idValidation, handleValidationErrors, async (req, res) => {
+router.delete('/deletemembershipbyid/:id', authenticateCookie, idValidation, handleValidationErrors, async (req, res) => {
   try {
     const deleted = await Membership.findByIdAndDelete(req.params.id);
     if (!deleted)

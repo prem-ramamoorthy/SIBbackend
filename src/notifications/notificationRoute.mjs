@@ -15,7 +15,7 @@ import {
 } from "../middlewares.mjs";
 import mongoose from "mongoose";
 import User from "../../Auth/Schemas.mjs";
-import { Membership , Chapter } from "../chapter/ChapterSchema.mjs";
+import { Membership, Chapter } from "../chapter/ChapterSchema.mjs";
 
 const router = express.Router();
 
@@ -36,7 +36,6 @@ router.post(
     async (req, res) => {
         try {
             const { receiver, sender, header, content, read, readAt } = req.body;
-            console.log(req.body)
             const notif = new Notification({ receiver, sender, header, content, read, readAt });
             await notif.save();
             res.status(201).json(notif);
@@ -172,56 +171,86 @@ router.patch(
 );
 
 router.post(
-  "/createbulknotifications",
-  authenticateCookie,
-  createbulkNotificationValidation,
-  handleValidationErrors,
-  async (req, res) => {
-    try {
-      const user_id = req.user.uid;
-      if (!user_id) {
-        return res.status(400).json({ error: "Missing user id." });
-      }
+    "/createbulknotifications",
+    authenticateCookie,
+    createbulkNotificationValidation,
+    handleValidationErrors,
+    async (req, res) => {
+        try {
+            const user_id = req.user.uid;
+            if (!user_id) {
+                return res.status(400).json({ error: "Missing user id." });
+            }
 
-      const userObj = await User.findOne({ user_id });
-      if (!userObj || !userObj._id) {
-        return res.status(404).json({ error: "User not found with UID" });
-      }
-      req.body.sender = userObj._id;
-      const membership = await Membership.findOne({ user_id: userObj._id });
-      if (!membership || !membership.chapter_id) {
-        return res.status(404).json({ error: "Membership or chapter not found." });
-      }
+            const userObj = await User.findOne({ user_id });
+            if (!userObj || !userObj._id) {
+                return res.status(404).json({ error: "User not found with UID" });
+            }
+            req.body.sender = userObj._id;
+            const membership = await Membership.findOne({ user_id: userObj._id });
+            if (!membership || !membership.chapter_id) {
+                return res.status(404).json({ error: "Membership or chapter not found." });
+            }
 
-      const chapterMemberships = await Membership.find({ 
-        chapter_id: membership.chapter_id, 
-        membership_status: true 
-      }, 'user_id');
+            const chapterMemberships = await Membership.find({
+                chapter_id: membership.chapter_id,
+                membership_status: true
+            }, 'user_id');
 
-      if (!chapterMemberships || chapterMemberships.length === 0) {
-        return res.status(404).json({ error: "No chapter members found for notifications." });
-      }
+            if (!chapterMemberships || chapterMemberships.length === 0) {
+                return res.status(404).json({ error: "No chapter members found for notifications." });
+            }
 
-      const { header, content, read = false, readAt = null } = req.body;
-      const sender = userObj._id;
+            const { header, content, read = false, readAt = null } = req.body;
+            const sender = userObj._id;
 
-      const notifications = await Notification.insertMany(
-        chapterMemberships
-          .filter(member => String(member.user_id) !== String(sender))
-          .map(member => ({
-            receiver: member.user_id,
-            sender,
-            header,
-            content,
-            read,
-            readAt
-          }))
-      );
-      res.status(201).json({ message: "Bulk notifications created.", count: notifications.length });
-    } catch (err) {
-      res.status(400).json({ error: err.message || "Failed to create notifications" });
+            const notifications = await Notification.insertMany(
+                chapterMemberships
+                    .filter(member => String(member.user_id) !== String(sender))
+                    .map(member => ({
+                        receiver: member.user_id,
+                        sender,
+                        header,
+                        content,
+                        read,
+                        readAt
+                    }))
+            );
+            res.status(201).json({ message: "Bulk notifications created.", count: notifications.length });
+        } catch (err) {
+            res.status(400).json({ error: err.message || "Failed to create notifications" });
+        }
     }
-  }
+);
+
+router.post(
+    "/createnotificationwithoutsender",
+    authenticateCookie,
+    createNotificationValidation,
+    handleValidationErrors,
+    mapNamesToIds,
+    assertBodyObjectIds,
+    handleValidationErrors,
+    async (req, res) => {
+        try {
+            const user_id = req.user.uid;
+            if (!user_id) {
+                return res.status(400).json({ error: "Missing user id." });
+            }
+
+            const userObj = await User.findOne({ user_id });
+            if (!userObj || !userObj._id) {
+                return res.status(404).json({ error: "User not found with UID" });
+            }
+            req.body.sender = userObj._id;
+            const { receiver, sender, header, content, read, readAt } = req.body;
+            const notif = new Notification({ receiver, sender, header, content, read, readAt });
+            await notif.save();
+            res.status(201).json(notif);
+        } catch (err) {
+            res.status(400).json({ error: err.message || "Failed to create notification" });
+        }
+    }
 );
 
 export default router;
