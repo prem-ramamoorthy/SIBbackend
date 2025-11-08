@@ -58,24 +58,44 @@ router.post(
 
 router.get('/getallevents', authenticateCookie, async (req, res) => {
     try {
+        const user_id = req.user.uid;
+        if (!user_id) {
+            return res.status(400).json({ error: "Missing user id." });
+        }
+
+        const userObj = await User.findOne({ user_id });
+        if (!userObj || !userObj._id) {
+            return res.status(404).json({ error: "User not found with UID" });
+        }
+
+        const membership = await Membership.findOne({ user_id: userObj._id });
+        if (!membership || !membership.chapter_id) {
+            return res.status(404).json({ error: "Membership or chapter not found." });
+        }
+
+        const chapter = await Chapter.findById(membership.chapter_id);
+        if (!chapter) {
+            return res.status(404).json({ error: "Chapter not found." });
+        }
         const docs = await Event.aggregate([
+            { $match: { chapter_id: chapter._id } },
             { $sort: { event_date: -1 } },
             { $lookup: { from: 'chapters', localField: 'chapter_id', foreignField: '_id', as: 'chapter' } },
             { $unwind: { path: '$chapter', preserveNullAndEmptyArrays: true } },
             {
-                $project: {
-                    event_title: 1,
-                    event_description: 1,
-                    event_date: 1,
-                    event_time: 1,
-                    location: 1,
-                    organizer_company: 1,
-                    event_type: 1,
-                    event_status: 1,
-                    createdAt: 1,
-                    updatedAt: 1,
-                    chapter: { _id: 1, chapter_name: 1, chapter_code: 1 },
-                }
+            $project: {
+                event_title: 1,
+                event_description: 1,
+                event_date: 1,
+                event_time: 1,
+                location: 1,
+                organizer_company: 1,
+                event_type: 1,
+                event_status: 1,
+                createdAt: 1,
+                updatedAt: 1,
+                chapter: { _id: 1, chapter_name: 1, chapter_code: 1 },
+            }
             }
         ]);
         res.status(200).json(docs);
@@ -125,14 +145,14 @@ router.put(
     handleValidationErrors,
     async (req, res) => {
         try {
-            const id = req.body._id ;
+            const id = req.body._id;
             const updated = await Event.findByIdAndUpdate(
                 id,
                 req.body,
                 { new: true, runValidators: true }
             );
             if (!updated) return res.status(404).json({ message: 'Event not found' });
-            res.status(200).json({message : "success" , id : updated._id});
+            res.status(200).json({ message: "success", id: updated._id });
         } catch (err) {
             res.status(500).json({ error: err.message });
         }
@@ -147,6 +167,50 @@ router.delete('/deleteeventbyid/:id', authenticateCookie, idValidation, handleVa
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
+});
+
+router.get('/getlatestevent', async (req, res) => {
+  try {
+    const now = new Date();
+    const [doc] = await Event.aggregate([
+      {
+        $match: {
+          event_status: "upcoming",
+          event_date: { $gte: now }
+        }
+      },
+      { $sort: { event_date: 1, event_time: 1 } },
+      { $limit: 1 },
+      {
+        $lookup: {
+          from: 'chapters',
+          localField: 'chapter_id',
+          foreignField: '_id',
+          as: 'chapter'
+        }
+      },
+      { $unwind: { path: '$chapter', preserveNullAndEmptyArrays: true } },
+      {
+        $project: {
+          event_date: 1,
+          event_time: 1,
+          event_type: 1,
+          duration: 1,
+          event_title: 1,
+          location: 1,
+          event_description: 1,
+          event_status: 1,
+          createdAt: 1,
+          updatedAt: 1,
+          chapter: { _id: 1, chapter_name: 1, chapter_code: 1 }
+        }
+      }
+    ]);
+    if (!doc) return res.status(404).json({ message: 'No upcoming meetings found' });
+    res.status(200).json(doc);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 export default router;

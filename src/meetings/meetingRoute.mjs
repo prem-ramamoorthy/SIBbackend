@@ -9,7 +9,7 @@ import {
 } from './validator.mjs';
 import { handleValidationErrors, authenticateCookie, mapNamesToIds } from '../middlewares.mjs';
 import User from '../../Auth/Schemas.mjs';
-import { Membership , Chapter } from '../chapter/ChapterSchema.mjs';
+import { Membership, Chapter } from '../chapter/ChapterSchema.mjs';
 
 const router = express.Router();
 router.use('/attendance', AttendanceRouter)
@@ -74,7 +74,7 @@ router.get('/getmeetings', authenticateCookie, async (req, res) => {
           meeting_date: 1,
           meeting_time: 1,
           meeting_type: 1,
-          duration : 1 ,
+          duration: 1,
           title: 1,
           location: 1,
           meeting_notes: 1,
@@ -144,7 +144,7 @@ router.put(
       );
       if (!updated)
         return res.status(404).json({ message: 'Meeting not found' });
-      res.status(200).json({message : "success" , id : updated._id});
+      res.status(200).json({ message: "success", id: updated._id });
     } catch (err) {
       res.status(500).json({ error: err.message });
     }
@@ -157,6 +157,50 @@ router.delete('/deletemeetingbyid/:id', authenticateCookie, idValidation, handle
     if (!deleted)
       return res.status(404).json({ message: 'Meeting not found' });
     res.status(200).json({ message: 'Meeting deleted successfully' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.get('/getlatestmeeting', async (req, res) => {
+  try {
+    const now = new Date();
+    const [doc] = await Meeting.aggregate([
+      {
+        $match: {
+          meeting_status: "upcoming",
+          meeting_date: { $gte: now }
+        }
+      },
+      { $sort: { meeting_date: 1, meeting_time: 1 } },
+      { $limit: 1 },
+      {
+        $lookup: {
+          from: 'chapters',
+          localField: 'chapter_id',
+          foreignField: '_id',
+          as: 'chapter'
+        }
+      },
+      { $unwind: { path: '$chapter', preserveNullAndEmptyArrays: true } },
+      {
+        $project: {
+          meeting_date: 1,
+          meeting_time: 1,
+          meeting_type: 1,
+          duration: 1,
+          title: 1,
+          location: 1,
+          meeting_notes: 1,
+          meeting_status: 1,
+          createdAt: 1,
+          updatedAt: 1,
+          chapter: { _id: 1, chapter_name: 1, chapter_code: 1 }
+        }
+      }
+    ]);
+    if (!doc) return res.status(404).json({ message: 'No upcoming meetings found' });
+    res.status(200).json(doc);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

@@ -3,6 +3,7 @@ import { Notification } from "./NotificationSchema.mjs";
 import {
     createNotificationValidation,
     getNotificationsValidation,
+    createbulkNotificationValidation,
     getNotificationByIdValidation,
     updateNotificationValidation,
     deleteNotificationValidation
@@ -14,6 +15,7 @@ import {
 } from "../middlewares.mjs";
 import mongoose from "mongoose";
 import User from "../../Auth/Schemas.mjs";
+import { Membership , Chapter } from "../chapter/ChapterSchema.mjs";
 
 const router = express.Router();
 
@@ -135,36 +137,89 @@ router.delete(
 );
 
 router.patch(
-  "/readallnotifications",
+    "/readallnotifications",
+    authenticateCookie,
+    handleValidationErrors,
+    async (req, res) => {
+        try {
+            const userId = req.user && req.user.uid;
+            if (!userId) {
+                return res.status(400).json({ error: "Missing user id." });
+            }
+
+            const userObj = await User.findOne({ user_id: userId }).lean();
+            if (!userObj?._id) {
+                return res.status(404).json({ error: "User not found." });
+            }
+
+            const filter = { receiver: userObj._id, read: { $ne: true } };
+            const update = { $set: { read: true, readAt: new Date() } };
+
+            const result = await Notification.updateMany(filter, update);
+            const notifications = await Notification.find({ receiver: userObj._id })
+                .sort({ createdAt: -1 });
+
+            res.json({
+                success: true,
+                matchedCount: result.matchedCount ?? result.nMatched,
+                modifiedCount: result.modifiedCount ?? result.nModified,
+                notifications,
+            });
+        } catch (err) {
+            res.status(500).json({ error: err.message || "Failed to update notifications" });
+        }
+    }
+);
+
+router.post(
+  "/createbulknotifications",
   authenticateCookie,
+  createbulkNotificationValidation,
   handleValidationErrors,
   async (req, res) => {
     try {
-      const userId = req.user && req.user.uid;
-      if (!userId) {
+      const user_id = req.user.uid;
+      if (!user_id) {
         return res.status(400).json({ error: "Missing user id." });
       }
 
-      const userObj = await User.findOne({ user_id: userId }).lean();
-      if (!userObj?._id) {
-        return res.status(404).json({ error: "User not found." });
+      const userObj = await User.findOne({ user_id });
+      if (!userObj || !userObj._id) {
+        return res.status(404).json({ error: "User not found with UID" });
+      }
+      req.body.sender = userObj._id;
+      const membership = await Membership.findOne({ user_id: userObj._id });
+      if (!membership || !membership.chapter_id) {
+        return res.status(404).json({ error: "Membership or chapter not found." });
       }
 
-      const filter = { receiver: userObj._id, read: { $ne: true } };
-      const update = { $set: { read: true, readAt: new Date() } };
+      const chapterMemberships = await Membership.find({ 
+        chapter_id: membership.chapter_id, 
+        membership_status: true 
+      }, 'user_id');
 
-      const result = await Notification.updateMany(filter, update);
-      const notifications = await Notification.find({ receiver: userObj._id })
-        .sort({ createdAt: -1 });
+      if (!chapterMemberships || chapterMemberships.length === 0) {
+        return res.status(404).json({ error: "No chapter members found for notifications." });
+      }
 
-      res.json({
-        success: true,
-        matchedCount: result.matchedCount ?? result.nMatched,
-        modifiedCount: result.modifiedCount ?? result.nModified,
-        notifications,
-      });
+      const { header, content, read = false, readAt = null } = req.body;
+      const sender = userObj._id;
+
+      const notifications = await Notification.insertMany(
+        chapterMemberships
+          .filter(member => String(member.user_id) !== String(sender))
+          .map(member => ({
+            receiver: member.user_id,
+            sender,
+            header,
+            content,
+            read,
+            readAt
+          }))
+      );
+      res.status(201).json({ message: "Bulk notifications created.", count: notifications.length });
     } catch (err) {
-      res.status(500).json({ error: err.message || "Failed to update notifications" });
+      res.status(400).json({ error: err.message || "Failed to create notifications" });
     }
   }
 );
