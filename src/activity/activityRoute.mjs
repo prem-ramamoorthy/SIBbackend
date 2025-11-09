@@ -2,6 +2,7 @@ import express from 'express';
 import { authenticateCookie } from '../middlewares.mjs';
 import { Referral, TYFTB, OneToOneMeeting, Visitor } from '../slips/slipsSchema.mjs';
 import User from '../../Auth/Schemas.mjs';
+import { Membership } from '../chapter/ChapterSchema.mjs';
 
 const router = express.Router() ;
 
@@ -498,6 +499,134 @@ router.get('/getactivity-details', authenticateCookie, async (req, res) => {
             details: err.message 
         });
     }
+});
+
+router.get('/getactivityofusers', authenticateCookie, async (req, res) => {
+  try {
+    const userId = req.user && req.user.uid;
+    if (!userId) {
+      return res.status(400).json({ error: "Missing user id." });
+    }
+
+    const userObj = await User.findOne({ user_id: userId });
+    if (!userObj) {
+      return res.status(404).json({ error: "User not found." });
+    }
+
+    const membership = await Membership.findOne({
+      user_id: userObj._id,
+      membership_status: true
+    });
+    if (!membership) {
+      return res.status(404).json({ error: "Membership not found." });
+    }
+
+    const allMemberships = await Membership.find({
+      chapter_id: membership.chapter_id,
+      membership_status: true
+    }).populate('user_id', 'username email _id');
+
+    if (!allMemberships || allMemberships.length === 0) {
+      return res.status(200).json([]);
+    }
+
+    const results = await Promise.all(
+      allMemberships.map(async (mem) => {
+        const user = mem.user_id;
+        if (!user || !user._id) return null;
+
+        try {
+          const [
+            referralsGiven,
+            referralsReceived,
+            tyftbGiven,
+            tyftbReceived,
+            m2mCount,
+            visitorsBrought
+          ] = await Promise.all([
+            Referral.countDocuments({ referrer_id: user._id }),
+            Referral.countDocuments({ referee_id: user._id }),
+            TYFTB.countDocuments({ payer_id: user._id }),
+            TYFTB.countDocuments({ receiver_id: user._id }),
+            OneToOneMeeting.countDocuments({
+              $or: [
+                { member1_id: user._id },
+                { member2_id: user._id }
+              ]
+            }),
+            Visitor.countDocuments({ inviting_member_id: user._id })
+          ]);
+
+          const [givenAgg, receivedAgg] = await Promise.all([
+            TYFTB.aggregate([
+              { $match: { payer_id: user._id } },
+              { $group: { _id: null, total: { $sum: '$business_amount' } } }
+            ]),
+            TYFTB.aggregate([
+              { $match: { receiver_id: user._id } },
+              { $group: { _id: null, total: { $sum: '$business_amount' } } }
+            ])
+          ]);
+
+          const businessGiven = givenAgg[0]?.total || 0;
+          const businessReceived = receivedAgg[0]?.total || 0;
+          const businessMade = (businessReceived) || 0;
+
+          return {
+            id: user._id.toString(),
+            rank: 0,
+            name: user.username || "Unknown",
+            referralsGiven: Number(referralsGiven) || 0,
+            referralsReceived: Number(referralsReceived) || 0,
+            tyftbGiven: Number(tyftbGiven) || 0,
+            tyftbReceived: Number(tyftbReceived) || 0,
+            businessMade: Number(businessGiven) || 0,
+            businessGiven: Number(businessMade) || 0,
+            mToM: Number(m2mCount) || 0,
+            visitorsBrought: Number(visitorsBrought) || 0
+          };
+        } catch (err) {
+          console.error(`Error processing user ${user._id}:`, err);
+          return null;
+        }
+      })
+    );
+
+    const filtered = results.filter(item => item !== null);
+
+    if (filtered.length === 0) {
+      return res.status(200).json([]);
+    }
+
+    filtered.sort((a, b) => {
+      if (b.businessGiven !== a.businessGiven) {
+        return b.businessGiven - a.businessGiven;
+      }
+      if (b.businessMade !== a.businessMade) {
+        return b.businessMade - a.businessMade;
+      }
+      if (b.referralsGiven !== a.referralsGiven) {
+        return b.referralsGiven - a.referralsGiven;
+      }
+      if (b.tyftbGiven !== a.tyftbGiven) {
+        return b.tyftbGiven - a.tyftbGiven;
+      }
+      return b.mToM - a.mToM;
+    });
+
+    filtered.forEach((item, idx) => {
+      item.rank = idx + 1;
+    });
+
+    return res.status(200).json(filtered);
+
+  } catch (err) {
+    console.error('Error fetching activity details:', err);
+    return res.status(500).json({
+      error: "Internal server error.",
+      details: err.message || "Unknown error"
+    });
+  }
 });
 
 export default router;

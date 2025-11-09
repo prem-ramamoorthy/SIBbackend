@@ -4,6 +4,7 @@ import { TYFTB } from './slipsSchema.mjs';
 import { createTyftbValidation, updateTyftbValidation, idValidation } from './validator.mjs';
 import { mapNamesToIds, authenticateCookie, handleValidationErrors } from '../middlewares.mjs';
 import User from '../../Auth/Schemas.mjs';
+import { Membership } from '../chapter/ChapterSchema.mjs';
 
 const router = express.Router();
 
@@ -40,8 +41,46 @@ router.post(
 
 router.get('/getalltyftb', authenticateCookie, async (req, res) => {
     try {
+        const firebaseUid = req.user && req.user.uid;
+        if (!firebaseUid) {
+            return res.status(400).json({ error: "Missing user id." });
+        }
+
+        const user = await User.findOne({ user_id: firebaseUid });
+        if (!user) {
+            return res.status(404).json({ error: "User not found." });
+        }
+
+        const userId = user._id;
+
+        const userMembership = await Membership.findOne({
+            user_id: userId,
+            membership_status: true
+        });
+        if (!userMembership) {
+            return res.status(404).json({ error: "Active membership not found for user." });
+        }
+
+        const chapterMemberships = await Membership.find({
+            chapter_id: userMembership.chapter_id,
+            membership_status: true
+        }).select('user_id');
+
+        const chapterUserIds = chapterMemberships.map(m => m.user_id);
+        if (chapterUserIds.length === 0) {
+            return res.status(200).json([]);
+        }
+
         const results = await TYFTB.aggregate([
-            { $sort: { date_closed: -1 } },
+            {
+                $match: {
+                    $or: [
+                        { payer_id: { $in: chapterUserIds } },
+                        { receiver_id: { $in: chapterUserIds } }
+                    ]
+                }
+            },
+            { $sort: { created_at: -1 } },
             {
                 $lookup: {
                     from: 'referrals',
@@ -53,7 +92,7 @@ router.get('/getalltyftb', authenticateCookie, async (req, res) => {
             { $unwind: { path: '$referral', preserveNullAndEmptyArrays: true } },
             {
                 $lookup: {
-                    from: 'profiles',
+                    from: 'users',
                     localField: 'payer_id',
                     foreignField: '_id',
                     as: 'payer'
@@ -62,7 +101,7 @@ router.get('/getalltyftb', authenticateCookie, async (req, res) => {
             { $unwind: { path: '$payer', preserveNullAndEmptyArrays: true } },
             {
                 $lookup: {
-                    from: 'profiles',
+                    from: 'users',
                     localField: 'receiver_id',
                     foreignField: '_id',
                     as: 'receiver'
@@ -71,26 +110,32 @@ router.get('/getalltyftb', authenticateCookie, async (req, res) => {
             { $unwind: { path: '$receiver', preserveNullAndEmptyArrays: true } },
             {
                 $project: {
+                    _id: 1,
                     referral: { referral_code: 1, contact_name: 1 },
-                    payer: { _id: 1, display_name: 1 },
-                    receiver: { _id: 1, display_name: 1 },
+                    payer: {
+                        _id: 1,
+                        username: 1,
+                        email: 1
+                    },
+                    receiver: {
+                        _id: 1,
+                        username: 1,
+                        email: 1
+                    },
                     business_type: 1,
                     referral_type: 1,
                     business_amount: 1,
-                    currency: 1,
                     business_description: 1,
-                    date_closed: 1,
-                    invoice_number: 1,
-                    verification_status: 1,
                     created_at: 1,
-                    createdAt: 1,
                     updatedAt: 1
                 }
             }
         ]);
-        res.status(200).json(results);
+
+        return res.status(200).json(results);
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        console.error('Error in /getalltyftb:', error);
+        return res.status(500).json({ error: error.message });
     }
 });
 

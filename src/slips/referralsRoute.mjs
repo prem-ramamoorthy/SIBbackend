@@ -7,6 +7,8 @@ import {
     updateReferralValidation
 } from './validator.mjs';
 import { mapNamesToIds, authenticateCookie, handleValidationErrors } from '../middlewares.mjs'
+import { Membership } from '../chapter/ChapterSchema.mjs';
+import User from '../../Auth/Schemas.mjs';
 
 const router = express.Router();
 
@@ -31,7 +33,41 @@ router.post(
 
 router.get('/getallreferrals', authenticateCookie, async (req, res) => {
     try {
+        const userId = req.user && req.user.uid;
+        if (!userId) {
+            return res.status(400).json({ error: "Missing user id." });
+        }
+
+        const userObj = await User.findOne({ user_id: userId });
+        if (!userObj) {
+            return res.status(404).json({ error: "User not found." });
+        }
+
+        const membership = await Membership.findOne({
+            user_id: userObj._id,
+            membership_status: true
+        });
+        if (!membership) {
+            return res.status(404).json({ error: "Membership not found." });
+        }
+
+        const allMemberships = await Membership.find({
+            chapter_id: membership.chapter_id,
+            membership_status: true
+        }).select('user_id');
+        const chapterUserIds = allMemberships.map(m => m.user_id);
+
+        if (!chapterUserIds.length) {
+            return res.status(200).json([]);
+        }
+
         const docs = await Referral.aggregate([
+            {
+                $match: {
+                    referrer_id: { $in: chapterUserIds },
+                    referee_id: { $in: chapterUserIds }
+                }
+            },
             { $sort: { created_at: -1 } },
             {
                 $lookup: {
@@ -76,7 +112,7 @@ router.get('/getallreferrals', authenticateCookie, async (req, res) => {
     }
 });
 
-router.get('/getrefferalbyid/:id',authenticateCookie,  idValidation, handleValidationErrors, async (req, res) => {
+router.get('/getrefferalbyid/:id', authenticateCookie, idValidation, handleValidationErrors, async (req, res) => {
     try {
         const [doc] = await Referral.aggregate([
             { $match: { _id: new mongoose.Types.ObjectId(req.params.id) } },
