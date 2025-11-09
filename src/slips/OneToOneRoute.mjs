@@ -8,6 +8,7 @@ import {
 } from './validator.mjs';
 import { mapNamesToIds, authenticateCookie, handleValidationErrors } from '../middlewares.mjs'
 import User from '../../Auth/Schemas.mjs';
+import { Membership } from '../chapter/ChapterSchema.mjs';
 
 const router = express.Router();
 
@@ -20,7 +21,7 @@ router.post(
   async (req, res) => {
     try {
       const user_id = req.user.uid;
-      
+
       if (!user_id) {
         return res.status(400).json({ error: "Missing user id." });
       }
@@ -45,11 +46,50 @@ router.post(
 
 router.get('/getone2ones', authenticateCookie, async (req, res) => {
   try {
+    const firebaseUid = req.user && req.user.uid;
+    if (!firebaseUid) {
+      return res.status(400).json({ error: "Missing user id." });
+    }
+
+    const user = await User.findOne({ user_id: firebaseUid });
+    if (!user) {
+      return res.status(404).json({ error: "User not found." });
+    }
+
+    const userId = user._id;
+
+    const userMembership = await Membership.findOne({
+      user_id: userId,
+      membership_status: true
+    });
+    if (!userMembership) {
+      return res.status(404).json({ error: "Active membership not found for user." });
+    }
+
+    const chapterMemberships = await Membership.find({
+      chapter_id: userMembership.chapter_id,
+      membership_status: true
+    }).select('user_id');
+
+    const chapterUserIds = chapterMemberships.map(m => m.user_id);
+    if (chapterUserIds.length === 0) {
+      return res.status(200).json([]);
+    }
+
     const docs = await OneToOneMeeting.aggregate([
+      {
+        $match: {
+          chapter_id: userMembership.chapter_id,
+          $or: [
+            { member1_id: { $in: chapterUserIds } },
+            { member2_id: { $in: chapterUserIds } }
+          ]
+        }
+      },
       { $sort: { meeting_date: -1 } },
       {
         $lookup: {
-          from: 'profiles',
+          from: 'users',
           localField: 'member1_id',
           foreignField: '_id',
           as: 'member1'
@@ -58,7 +98,7 @@ router.get('/getone2ones', authenticateCookie, async (req, res) => {
       { $unwind: { path: '$member1', preserveNullAndEmptyArrays: true } },
       {
         $lookup: {
-          from: 'profiles',
+          from: 'users',
           localField: 'member2_id',
           foreignField: '_id',
           as: 'member2'
@@ -82,11 +122,43 @@ router.get('/getone2ones', authenticateCookie, async (req, res) => {
           as: 'created_by_user'
         }
       },
-      { $unwind: { path: '$created_by_user', preserveNullAndEmptyArrays: true } }
+      { $unwind: { path: '$created_by_user', preserveNullAndEmptyArrays: true } },
+      {
+        $project: {
+          _id: 1,
+          member1: {
+            _id: 1,
+            username: 1,
+            email: 1
+          },
+          member2: {
+            _id: 1,
+            username: 1,
+            email: 1
+          },
+          chapter: {
+            _id: 1,
+            chapter_name: 1,
+            chapter_code: 1
+          },
+          created_by_user: {
+            _id: 1,
+            username: 1,
+            email: 1
+          },
+          meeting_date: 1,
+          location: 1,
+          discussion_points: 1,
+          createdAt: 1,
+          updatedAt: 1
+        }
+      }
     ]);
-    res.status(200).json(docs);
+
+    return res.status(200).json(docs);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error('Error in /getone2ones:', err);
+    return res.status(500).json({ error: err.message });
   }
 });
 
