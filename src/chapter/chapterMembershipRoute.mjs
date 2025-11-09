@@ -61,6 +61,40 @@ router.post(
   }
 );
 
+router.post(
+  '/createpresident',
+  authenticateCookie,
+  createMembershipValidation,
+  handleValidationErrors,
+  mapNamesToIds,
+  async (req, res) => {
+    try {
+      let newUserId = req.body.user_id;
+      if (!newUserId && req.body.username) {
+        const newUser = await User.findOne({ username: req.body.username });
+        if (!newUser) {
+          return res.status(404).json({ error: "Target user for membership not found." });
+        }
+        newUserId = newUser._id;
+        req.body.user_id = newUserId;
+      }
+      
+      if (!req.body.user_id || !req.body.chapter_id) {
+        return res.status(400).json({ message: 'Both valid user_id and chapter_id are required.' });
+      }
+
+      const membership = new Membership(req.body);
+      const saved = await membership.save();
+      return res.status(201).json(saved);
+
+    } catch (err) {
+      console.log(err);
+      return res.status(500).json({ error: err.message });
+    }
+  }
+);
+
+
 router.get('/getallmemberships', authenticateCookie, async (req, res) => {
   try {
     const user_id = req.user.uid;

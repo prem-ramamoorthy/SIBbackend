@@ -28,6 +28,23 @@ router.post("/signup", signupValidator, handleValidation, async (req, res) => {
   }
 });
 
+router.put("/signupadmin", async (req, res) => {
+  const { username, email, password } = req.body;
+  try {
+    const userRecord = await admin.auth().createUser({ email, password, displayName: username });
+    const updatedUser = await User.findOneAndUpdate(
+      { email },
+      { user_id: userRecord.uid },
+      { new: true }
+    );
+    if (!updatedUser) throw new Error("User with this email not found in database");
+    return res.status(201).json({ message: "User created", uid: userRecord.uid, dbId: updatedUser._id });
+  } catch (error) {
+    return res.status(400).json({ error: error.message });
+  }
+});
+
+
 router.post("/sessionLogin", loginValidator, handleValidation, async (req, res) => {
   const idToken = req.body.idToken?.toString();
   const user_id = req.body.user_id?.toString();
@@ -140,7 +157,7 @@ router.post("/updatePassword", updatePasswordValidator, handleValidation, async 
   }
 });
 
-router.get("/getuser", authenticateCookie ,async (req, res) => {
+router.get("/getuser", authenticateCookie, async (req, res) => {
   try {
     const userId = req.user && req.user.uid;
     if (!userId) {
