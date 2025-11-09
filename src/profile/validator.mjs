@@ -102,7 +102,7 @@ export const createProfileValidation = [
 
 export const updateProfileValidation = [
   body('display_name').optional({ checkFalsy: true }).isString().isLength({ max: 50 }),
-  body('profile_image_url').optional({ checkFalsy: true }).isURL(),
+  body('profile_image_url').optional({ checkFalsy: true }),
   body('company_phone').optional({ checkFalsy: true }).isString().isLength({ max: 20 }),
   body('company_email').optional({ checkFalsy: true }).isEmail().isLength({ max: 100 }),
   body('company_address').optional({ checkFalsy: true }).isString(),

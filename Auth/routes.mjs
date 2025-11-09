@@ -44,7 +44,6 @@ router.put("/signupadmin", async (req, res) => {
   }
 });
 
-
 router.post("/sessionLogin", loginValidator, handleValidation, async (req, res) => {
   const idToken = req.body.idToken?.toString();
   const user_id = req.body.user_id?.toString();
@@ -167,6 +166,47 @@ router.get("/getuser", authenticateCookie, async (req, res) => {
     res.json(userObj);
   } catch (error) {
     res.status(400).json({ error: error.message });
+  }
+});
+
+import multer from 'multer'
+import sharp from "sharp";
+
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 10 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    if (!file.mimetype.startsWith('image/')) {
+      return cb(new Error('Only image files are allowed!'), false);
+    }
+    cb(null, true);
+  }
+});
+
+router.post('/upload/photo', upload.single('photo'), async (req, res) => {
+  try {
+    if (!req.file) throw new Error('No file uploaded');
+    const processedBuffer = await sharp(req.file.buffer)
+      .resize({ width: 800, withoutEnlargement: true })
+      .jpeg({ quality: 75 })
+      .toBuffer();
+
+    const bucket = admin.storage().bucket();
+    const fileName = `photos/${Date.now()}_${req.file.originalname.replace(/\s/g, '_')}.jpg`;
+    const file = bucket.file(fileName);
+
+    await file.save(processedBuffer, {
+      metadata: {
+        contentType: 'image/jpeg'
+      }
+    });
+    await file.makePublic();
+    const publicUrl = `https://storage.googleapis.com/${bucket.name}/${fileName}`;
+
+    res.status(200).json({ message: 'Photo uploaded and processed!', url: publicUrl });
+  } catch (err) {
+    console.error(err);
+    res.status(400).json({ error: err.message });
   }
 });
 

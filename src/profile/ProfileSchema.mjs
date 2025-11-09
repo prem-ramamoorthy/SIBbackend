@@ -37,10 +37,6 @@ const profileSchema = new Schema(
       type: String,
       trim: true,
       maxlength: 255,
-      validate: {
-        validator: v => !v || urlRegex.test(v),
-        message: 'profile_image_url must be a valid URL starting with http or https',
-      },
       default: null,
     },
     company_phone: {
