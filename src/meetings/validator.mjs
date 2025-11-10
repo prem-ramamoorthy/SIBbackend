@@ -29,19 +29,15 @@ export const updateMeetingValidation = [
 
 export const createAttendanceValidation = [
   body('username').isString().notEmpty(),
+  body('meeting_id').isString().notEmpty(),
   body('attendance_status').isString().isLength({ max: 20 }).notEmpty(),
-  body('substitute_username').optional().isString(),
-  body('absence_reason').optional().isString().isLength({ max: 255 }),
-  body('notes').optional().isString(),
-  body('created_at').isISO8601().toDate().notEmpty()
+  body('date').isISO8601().toDate().notEmpty()
 ];
 
 export const updateAttendanceValidation = [
   param('id').isMongoId(),
   body('username').optional().isString(),
+  body('meeting_id').isString().optional(),
   body('attendance_status').optional().isString().isLength({ max: 20 }),
-  body('substitute_username').optional().isString(),
-  body('absence_reason').optional().isString().isLength({ max: 255 }),
-  body('notes').optional().isString(),
-  body('created_at').optional().isISO8601().toDate()
+  body('date').optional().isISO8601().toDate()
 ];

@@ -48,7 +48,7 @@ const meetingSchema = new Schema(
     duration: {
       type: Number,
       min: 0,
-      required : true,
+      required: true,
       default: 0
     },
     meeting_status: {
@@ -80,28 +80,23 @@ const attendanceSchema = new Schema({
     required: true,
     index: true
   },
+  meeting_id: {
+    type: Types.ObjectId,
+    ref: 'meetings',
+    required: true,
+    index: true
+  },
   attendance_status: {
     type: String,
     required: true,
     trim: true,
+    enum: {
+      values: ['present', 'absent'],
+      message: 'attendance_status must be a valid type ["present" , "absent"]',
+    },
     maxLength: 20
   },
-  substitute_user_id: {
-    type: Types.ObjectId,
-    ref: 'users',
-    default: null,
-    index: true
-  },
-  absence_reason: {
-    type: String,
-    trim: true,
-    maxLength: 255
-  },
-  notes: {
-    type: String,
-    trim: true
-  },
-  created_at: {
+  date: {
     type: Date,
     required: true,
     default: Date.now
@@ -113,6 +108,6 @@ const attendanceSchema = new Schema({
     toObject: { getters: true }
   });
 
-attendanceSchema.index({ user_id: 1, created_at: 1 });
+attendanceSchema.index({ user_id: 1, date: 1 });
 
 export const Attendance = mongoose.model('attendance', attendanceSchema);
