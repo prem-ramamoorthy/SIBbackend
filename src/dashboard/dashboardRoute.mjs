@@ -266,8 +266,7 @@ router.get('/weekstats', authenticateCookie, async (req, res) => {
 	}
 });
 
-router.post(
-	'/searchuser',
+router.post('/searchuser',
 	authenticateCookie,
 	searchUserValidator,
 	handleValidationErrors,
@@ -279,7 +278,6 @@ router.post(
 			if (!userUid) {
 				return res.status(400).json({ error: "Missing user id." });
 			}
-
 			if (!substr || substr.trim() === "") {
 				return res.status(400).json({ error: "Search substring required." });
 			}
@@ -289,27 +287,25 @@ router.post(
 				return res.status(404).json({ error: "User not found." });
 			}
 
-			const membership = await Membership.findOne({ user_id: userObj._id });
+			const membership = await Membership.findOne({ user_id: userObj._id, membership_status: true });
 			if (!membership?.chapter_id) {
 				return res.status(404).json({ error: "Membership or chapter not found." });
 			}
 
 			const sameChapterMemberships = await Membership.find({
 				chapter_id: membership.chapter_id,
-			}).select("user_id");
-
-			const memberIds = sameChapterMemberships.map(m => m.user_id);
+				membership_status: true
+			}).distinct("user_id");
 
 			const matchedUsers = await User.find({
-				_id: { $in: memberIds },
-				username: { $regex: substr.trim(), $options: "i" },
-				_id: { $ne: userObj._id }
+				_id: { $in: sameChapterMemberships, $ne: userObj._id },
+				username: { $regex: substr.trim(), $options: "i" }
 			})
 				.select("username")
 				.limit(10);
 
 			return res.status(200).json({
-				results: matchedUsers.map(u => (u.username))
+				results: matchedUsers.map(u => u.username)
 			});
 		} catch (error) {
 			console.error("SearchUser Error:", error);
@@ -318,8 +314,7 @@ router.post(
 	}
 );
 
-router.post(
-	'/searchchapter',
+router.post('/searchchapter',
 	authenticateCookie,
 	searchUserValidator,
 	handleValidationErrors,
