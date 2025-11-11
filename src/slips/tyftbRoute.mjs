@@ -123,6 +123,7 @@ router.get('/getalltyftb', authenticateCookie, async (req, res) => {
                         email: 1
                     },
                     business_type: 1,
+                    status: 1,
                     referral_type: 1,
                     business_amount: 1,
                     business_description: 1,
@@ -186,6 +187,7 @@ router.get('/gettyftbbyid/:id',
                         business_description: 1,
                         date_closed: 1,
                         invoice_number: 1,
+                        status: 1,
                         verification_status: 1,
                         created_at: 1,
                         createdAt: 1,
@@ -201,8 +203,7 @@ router.get('/gettyftbbyid/:id',
     }
 );
 
-router.put(
-    '/updatetyftbbyid/:id',
+router.put('/updatetyftbbyid/:id',
     authenticateCookie,
     updateTyftbValidation,
     handleValidationErrors,
@@ -239,6 +240,7 @@ router.put(
                         invoice_number: 1,
                         verification_status: 1,
                         created_at: 1,
+                        status: 1,
                         createdAt: 1,
                         updatedAt: 1
                     }
@@ -249,6 +251,28 @@ router.put(
             res.status(500).json({ error: err.message });
         }
     }
+);
+
+router.put('/updatetyftbstatusbypayer/:userid',
+  authenticateCookie,
+  async (req, res) => {
+    try {
+      const { userid } = req.params;
+      if (!userid) {
+        return res.status(400).json({ error: "Missing userid parameter." });
+      }
+      const result = await TYFTB.updateMany(
+        { payer_id: userid },
+        { $set: { status: true } }
+      );
+      if (result.matchedCount === 0 && result.modifiedCount === 0) {
+        return res.status(200).json({ message: 'No TYFTB records found for this payer.' });
+      }
+      res.status(200).json({ message: `Updated ${result.modifiedCount} TYFTB records to status=true.` });
+    } catch (e) {
+      res.status(500).json({ error: e.message });
+    }
+  }
 );
 
 router.delete(

@@ -374,15 +374,15 @@ router.get('/getactivity/:timeline', authenticateCookie, async (req, res) => {
 			? { createdAt: { $gte: startDate, $lte: endDate } }
 			: {};
 
-		const referralGivenFilter = { referrer_id: userObj._id, ...rangeFilter };
-		const referralReceivedFilter = { referee_id: userObj._id, ...rangeFilter };
-		const tyftbGivenFilter = { payer_id: userObj._id, ...rangeFilter };
-		const tyftbReceivedFilter = { receiver_id: userObj._id, ...rangeFilter };
+		const referralGivenFilter = { referrer_id: userObj._id, status: true, ...rangeFilter };
+		const referralReceivedFilter = { referee_id: userObj._id, status: true, ...rangeFilter };
+		const tyftbGivenFilter = { payer_id: userObj._id, status: true, ...rangeFilter };
+		const tyftbReceivedFilter = { receiver_id: userObj._id, status: true, ...rangeFilter };
 		const m2mFilter = {
-			$or: [{ member1_id: userObj._id }, { member2_id: userObj._id }],
+			$or: [{ member1_id: userObj._id }, { member2_id: userObj._id }], status: true,
 			...rangeFilter
 		};
-		const visitorsFilter = { inviting_member_id: userObj._id, ...rangeFilter };
+		const visitorsFilter = { inviting_member_id: userObj._id, status: true, ...rangeFilter };
 
 		const [
 			referral_given,
@@ -400,7 +400,90 @@ router.get('/getactivity/:timeline', authenticateCookie, async (req, res) => {
 			OneToOneMeeting.countDocuments(m2mFilter),
 			Visitor.countDocuments(visitorsFilter),
 			TYFTB.aggregate([
-				{ $match: { receiver_id: userObj._id, ...(rangeFilter.createdAt ? rangeFilter : {}) } },
+				{ $match: { payer_id: userObj._id, status: true, ...(rangeFilter.createdAt ? rangeFilter : {}) } },
+				{ $group: { _id: null, totalBusiness: { $sum: "$business_amount" } } }
+			])
+		]);
+
+		const business_made = (businessAgg[0]?.totalBusiness) || 0;
+
+		return res.status(200).json({
+			timeline,
+			date_range: startDate && endDate ? { start: startDate, end: endDate } : null,
+			referral_given,
+			referral_received,
+			tyftb_given,
+			tyftb_received,
+			business_made,
+			M2Ms,
+			Visitors
+		});
+	} catch (err) {
+		console.error('Error fetching activity:', err);
+		return res.status(500).json({ error: "Internal server error." });
+	}
+});
+
+router.get('/getactivityupcoming/:timeline', authenticateCookie, async (req, res) => {
+	const timeline = String(req.params.timeline || 'full').toLowerCase(); // "full" | "6months" | "amonth"
+	try {
+		const userId = req.user && req.user.uid;
+		if (!userId) {
+			return res.status(400).json({ error: "Missing user id." });
+		}
+
+		const userObj = await User.findOne({ user_id: userId }).lean();
+
+		if (!userObj?._id) {
+			return res.status(404).json({ error: "User not found." });
+		}
+
+		const now = new Date();
+		let startDate = null;
+		let endDate = now;
+
+		if (timeline === 'amonth') {
+			startDate = new Date();
+			startDate.setMonth(startDate.getMonth() - 1);
+		} else if (timeline === '6months') {
+			startDate = new Date();
+			startDate.setMonth(startDate.getMonth() - 6);
+		} else if (timeline === 'full') {
+			startDate = null;
+			endDate = null;
+		}
+
+		const rangeFilter = startDate && endDate
+			? { createdAt: { $gte: startDate, $lte: endDate } }
+			: {};
+
+		const referralGivenFilter = { referrer_id: userObj._id, status: false, ...rangeFilter };
+		const referralReceivedFilter = { referee_id: userObj._id, status: false, ...rangeFilter };
+		const tyftbGivenFilter = { payer_id: userObj._id, status: false, ...rangeFilter };
+		const tyftbReceivedFilter = { receiver_id: userObj._id, status: false, ...rangeFilter };
+		const m2mFilter = {
+			$or: [{ member1_id: userObj._id }, { member2_id: userObj._id }], status: false,
+			...rangeFilter
+		};
+		const visitorsFilter = { inviting_member_id: userObj._id, status: false, ...rangeFilter };
+
+		const [
+			referral_given,
+			referral_received,
+			tyftb_given,
+			tyftb_received,
+			M2Ms,
+			Visitors,
+			businessAgg
+		] = await Promise.all([
+			Referral.countDocuments(referralGivenFilter),
+			Referral.countDocuments(referralReceivedFilter),
+			TYFTB.countDocuments(tyftbGivenFilter),
+			TYFTB.countDocuments(tyftbReceivedFilter),
+			OneToOneMeeting.countDocuments(m2mFilter),
+			Visitor.countDocuments(visitorsFilter),
+			TYFTB.aggregate([
+				{ $match: { payer_id: userObj._id, status: false, ...(rangeFilter.createdAt ? rangeFilter : {}) } },
 				{ $group: { _id: null, totalBusiness: { $sum: "$business_amount" } } }
 			])
 		]);

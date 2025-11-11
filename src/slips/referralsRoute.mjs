@@ -12,8 +12,7 @@ import User from '../../Auth/Schemas.mjs';
 
 const router = express.Router();
 
-router.post(
-    '/createreferral',
+router.post('/createreferral',
     createReferralValidation,
     handleValidationErrors,
     mapNamesToIds, authenticateCookie,
@@ -92,6 +91,7 @@ router.get('/getallreferrals', authenticateCookie, async (req, res) => {
                     referral_code: 1,
                     contact_name: 1,
                     description: 1,
+                    status: 1,
                     referral_type: 1,
                     referral_category: 1,
                     contact_phone: 1,
@@ -126,6 +126,7 @@ router.get('/getrefferalbyid/:id', authenticateCookie, idValidation, handleValid
                     contact_name: 1,
                     description: 1,
                     referral_type: 1,
+                    status: 1,
                     referral_category: 1,
                     contact_phone: 1,
                     contact_email: 1,
@@ -160,6 +161,29 @@ router.put(
             );
             if (!updated) return res.status(404).json({ message: 'Referral not found' });
             res.status(200).json(updated);
+        } catch (e) {
+            res.status(500).json({ error: e.message });
+        }
+    }
+);
+
+router.put(
+    '/updatereferralstatusbyreferrer/:userid',
+    authenticateCookie,
+    async (req, res) => {
+        try {
+            const { userid } = req.params;
+            if (!userid) {
+                return res.status(400).json({ error: "Missing userid parameter." });
+            }
+            const result = await Referral.updateMany(
+                { referrer_id: userid },
+                { $set: { status: true } }
+            );
+            if (result.matchedCount === 0) {
+                return res.status(200).json({ message: 'No referrals found for this referrer.' });
+            }
+            res.status(200).json({ message: `Updated ${result.modifiedCount} referrals to status=true.` });
         } catch (e) {
             res.status(500).json({ error: e.message });
         }

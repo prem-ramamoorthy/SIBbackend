@@ -48,6 +48,7 @@ router.get('/getallvisitors', authenticateCookie, async (req, res) => {
         converted_to_member: 1,
         createdAt: 1,
         updatedAt: 1,
+        status : 1,
         inviting_member: { _id: 1, display_name: 1 },
         member_user: { _id: 1, username: 1, email: 1 }
       }}
@@ -76,6 +77,7 @@ router.get('/getvisitorbyid/:id', authenticateCookie, idValidation, handleValida
         presentation_given: 1,
         follow_up_notes: 1,
         converted_to_member: 1,
+        status : 1,
         createdAt: 1,
         updatedAt: 1,
         inviting_member: { _id: 1, display_name: 1 },
@@ -90,8 +92,7 @@ router.get('/getvisitorbyid/:id', authenticateCookie, idValidation, handleValida
 });
 
 
-router.put(
-  '/updatevisitorbyid/:id',
+router.put('/updatevisitorbyid/:id',
   updateVisitorValidation,
   handleValidationErrors,
   mapNamesToIds, authenticateCookie,

@@ -10,7 +10,8 @@ export const createOneToOneMeetingValidation = [
   body('meeting_date').isISO8601().toDate().notEmpty(),
   body('location').isString().isLength({ max: 255 }).notEmpty(),
   body('discussion_points').optional().isString(),
-  body('created_by_username').isString().notEmpty()
+  body('created_by_username').isString().notEmpty(),
+  body('status').isBoolean().notEmpty(),
 ];
 
 export const updateOneToOneMeetingValidation = [
@@ -21,7 +22,8 @@ export const updateOneToOneMeetingValidation = [
   body('meeting_date').optional().isISO8601().toDate(),
   body('location').optional().isString().isLength({ max: 255 }),
   body('discussion_points').optional().isString(),
-  body('created_by_username').optional().isString()
+  body('created_by_username').optional().isString(),
+  body('status').isBoolean().optional(),
 ];
 
 export const createReferralValidation = [
@@ -30,13 +32,14 @@ export const createReferralValidation = [
   body('contact_name').isString().isLength({ max: 100 }).optional(),
   body('description').isString().notEmpty(),
   body('referral_type').isString().isLength({ max: 20 }).notEmpty(),
-  body('referral_status').isArray({ max : 3 }),
+  body('referral_status').isArray({ max: 3 }),
   body('contact_phone').isString().isLength({ max: 20 }).isNumeric(),
   body('contact_email').isEmail().isLength({ max: 100 }).optional(),
   body('contact_address').isString().optional(),
   body('comments').isString().optional(),
   body('hot').isString().isLength({ max: 20 }).notEmpty(),
-  body('created_at').isISO8601().toDate().notEmpty()
+  body('created_at').isISO8601().toDate().notEmpty(),
+  body('status').isBoolean().notEmpty(),
 ];
 
 export const updateReferralValidation = [
@@ -46,13 +49,14 @@ export const updateReferralValidation = [
   body('contact_name').optional().isString().isLength({ max: 100 }),
   body('description').optional().isString(),
   body('referral_type').optional().isString().isLength({ max: 20 }),
-  body('referral_status').optional().isArray({ max : 3 }),
+  body('referral_status').optional().isArray({ max: 3 }),
   body('contact_phone').optional().isString().isLength({ max: 20 }),
   body('contact_email').optional().isEmail().isLength({ max: 100 }),
   body('contact_address').optional().isString(),
   body('comments').optional().isString(),
   body('hot').optional().isString().isLength({ max: 20 }),
-  body('created_at').optional().isISO8601().toDate()
+  body('created_at').optional().isISO8601().toDate(),
+  body('status').isBoolean().optional(),
 ];
 
 export const createVisitorValidation = [
@@ -66,7 +70,8 @@ export const createVisitorValidation = [
   body('presentation_given').isBoolean().notEmpty(),
   body('follow_up_notes').optional().isString(),
   body('converted_to_member').isBoolean().notEmpty(),
-  body('member_username').optional().isString()
+  body('member_username').optional().isString(),
+  body('status').isBoolean().notEmpty(),
 ];
 
 export const updateVisitorValidation = [
@@ -81,7 +86,8 @@ export const updateVisitorValidation = [
   body('presentation_given').optional().isBoolean(),
   body('follow_up_notes').optional().isString(),
   body('converted_to_member').optional().isBoolean(),
-  body('member_username').optional().isString()
+  body('member_username').optional().isString(),
+  body('status').isBoolean().optional(),
 ];
 
 export const createTyftbValidation = [
@@ -91,7 +97,8 @@ export const createTyftbValidation = [
   body('referral_type').isString().notEmpty().isLength({ max: 20 }),
   body('business_amount').isDecimal().notEmpty(),
   body('business_description').isString().optional(),
-  body('created_at').isISO8601().notEmpty()
+  body('created_at').isISO8601().notEmpty(),
+  body('status').isBoolean().notEmpty(),
 ];
 
 export const updateTyftbValidation = [
@@ -103,5 +110,6 @@ export const updateTyftbValidation = [
   body('referral_type').optional().isString().isLength({ max: 20 }),
   body('business_amount').optional().isDecimal(),
   body('business_description').optional().isString(),
-  body('created_at').optional().isISO8601()
+  body('created_at').optional().isISO8601(),
+  body('status').isBoolean().optional(),
 ];

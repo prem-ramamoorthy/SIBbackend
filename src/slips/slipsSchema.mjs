@@ -39,6 +39,10 @@ const oneToOneMeetingSchema = new Schema({
     type: Types.ObjectId,
     ref: 'users',
     required: true
+  },
+  status: {
+    type: Boolean,
+    required: true
   }
 },
   {
@@ -121,6 +125,10 @@ const referralSchema = new Schema(
       type: Date,
       required: true,
       default: Date.now
+    },
+    status: {
+      type: Boolean,
+      required: true
     }
   },
   {
@@ -193,6 +201,10 @@ const visitorSchema = new Schema({
     type: Types.ObjectId,
     ref: 'users',
     default: null
+  },
+  status: {
+    type: Boolean,
+    required: true
   }
 }, {
   timestamps: true
@@ -246,6 +258,10 @@ const tyftbSchema = new Schema({
     type: Date,
     required: true,
     default: Date.now
+  },
+  status: {
+    type: Boolean,
+    required: true
   }
 }, {
   timestamps: true,

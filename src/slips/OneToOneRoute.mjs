@@ -146,6 +146,7 @@ router.get('/getone2ones', authenticateCookie, async (req, res) => {
             username: 1,
             email: 1
           },
+          status: 1,
           meeting_date: 1,
           location: 1,
           discussion_points: 1,
@@ -210,8 +211,7 @@ router.get('/getone2onebyid/:id', authenticateCookie, idValidation, handleValida
   }
 });
 
-router.put(
-  '/updateone2onebyid/:id',
+router.put('/updateone2onebyid/:id',
   updateOneToOneMeetingValidation,
   handleValidationErrors,
   mapNamesToIds, authenticateCookie,
@@ -227,6 +227,28 @@ router.put(
       res.status(200).json(updated);
     } catch (err) {
       res.status(500).json({ error: err.message });
+    }
+  }
+);
+
+router.put('/updatem2mstatusbyuserid/:userid',
+  authenticateCookie,
+  async (req, res) => {
+    try {
+      const { userid } = req.params;
+      if (!userid) {
+        return res.status(400).json({ error: "Missing userid parameter." });
+      }
+      const result = await OneToOneMeeting.updateMany(
+        { $or: [{ member1_id: userid }, { member2_id: userid }] },
+        { $set: { status: true } }
+      );
+      if (result.matchedCount === 0 && result.modifiedCount === 0) {
+        return res.status(404).json({ message: 'No one-to-one meetings found for this user.' });
+      }
+      res.status(200).json({ message: `Updated ${result.modifiedCount} one-to-one meetings to status=true.` });
+    } catch (e) {
+      res.status(500).json({ error: e.message });
     }
   }
 );
