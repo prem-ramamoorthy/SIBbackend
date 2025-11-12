@@ -35,7 +35,8 @@ const allowedOrigins = [
   "https://www.senguntharinbusiness.in", // your live website
   "https://localhost",                   // Android WebView (Capacitor HTTPS mode)
   "http://localhost",                    // sometimes used by Capacitor in dev
-  "capacitor://localhost"                // official Capacitor app origin
+  "capacitor://localhost",
+  "http://localhost:5173"               // official Capacitor app origin
 ];
 
 app.use(

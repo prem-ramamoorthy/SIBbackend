@@ -72,68 +72,19 @@ router.get('/getalltyftb', authenticateCookie, async (req, res) => {
         }
 
         const results = await TYFTB.aggregate([
+            { $match: { payer_id: { $in: chapterUserIds } } },
             {
-                $match: {
-                    $or: [
-                        { payer_id: { $in: chapterUserIds } },
-                        { receiver_id: { $in: chapterUserIds } }
-                    ]
-                }
-            },
-            { $sort: { created_at: -1 } },
-            {
-                $lookup: {
-                    from: 'referrals',
-                    localField: 'referral_id',
-                    foreignField: '_id',
-                    as: 'referral'
-                }
-            },
-            { $unwind: { path: '$referral', preserveNullAndEmptyArrays: true } },
-            {
-                $lookup: {
-                    from: 'users',
-                    localField: 'payer_id',
-                    foreignField: '_id',
-                    as: 'payer'
-                }
-            },
-            { $unwind: { path: '$payer', preserveNullAndEmptyArrays: true } },
-            {
-                $lookup: {
-                    from: 'users',
-                    localField: 'receiver_id',
-                    foreignField: '_id',
-                    as: 'receiver'
-                }
-            },
-            { $unwind: { path: '$receiver', preserveNullAndEmptyArrays: true } },
-            {
-                $project: {
-                    _id: 1,
-                    referral: { referral_code: 1, contact_name: 1 },
-                    payer: {
-                        _id: 1,
-                        username: 1,
-                        email: 1
-                    },
-                    receiver: {
-                        _id: 1,
-                        username: 1,
-                        email: 1
-                    },
-                    business_type: 1,
-                    status: 1,
-                    referral_type: 1,
-                    business_amount: 1,
-                    business_description: 1,
-                    created_at: 1,
-                    updatedAt: 1
+                $group: {
+                    _id: '$payer_id',
+                    totalBusinessAmount: { $sum: '$business_amount' },
+                    payer: { $first: '$payer' },
+                    records: { $push: '$$ROOT' }
                 }
             }
         ]);
 
-        return res.status(200).json(results);
+
+        return res.status(200).json(results.totalBusinessAmount);
     } catch (error) {
         console.error('Error in /getalltyftb:', error);
         return res.status(500).json({ error: error.message });
@@ -254,25 +205,25 @@ router.put('/updatetyftbbyid/:id',
 );
 
 router.put('/updatetyftbstatusbypayer/:userid',
-  authenticateCookie,
-  async (req, res) => {
-    try {
-      const { userid } = req.params;
-      if (!userid) {
-        return res.status(400).json({ error: "Missing userid parameter." });
-      }
-      const result = await TYFTB.updateMany(
-        { payer_id: userid },
-        { $set: { status: true } }
-      );
-      if (result.matchedCount === 0 && result.modifiedCount === 0) {
-        return res.status(200).json({ message: 'No TYFTB records found for this payer.' });
-      }
-      res.status(200).json({ message: `Updated ${result.modifiedCount} TYFTB records to status=true.` });
-    } catch (e) {
-      res.status(500).json({ error: e.message });
+    authenticateCookie,
+    async (req, res) => {
+        try {
+            const { userid } = req.params;
+            if (!userid) {
+                return res.status(400).json({ error: "Missing userid parameter." });
+            }
+            const result = await TYFTB.updateMany(
+                { payer_id: userid },
+                { $set: { status: true } }
+            );
+            if (result.matchedCount === 0 && result.modifiedCount === 0) {
+                return res.status(200).json({ message: 'No TYFTB records found for this payer.' });
+            }
+            res.status(200).json({ message: `Updated ${result.modifiedCount} TYFTB records to status=true.` });
+        } catch (e) {
+            res.status(500).json({ error: e.message });
+        }
     }
-  }
 );
 
 router.delete(

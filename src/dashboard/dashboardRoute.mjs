@@ -32,6 +32,8 @@ router.get('/getchapteroverview', authenticateCookie, async (req, res) => {
 			return res.status(404).json({ error: "Chapter not found." });
 		}
 
+		const membercount = await Membership.countDocuments({ chapter_id: chapter._id });
+
 		const now = new Date();
 		const [doc] = await Meeting.aggregate([
 			{
@@ -59,16 +61,47 @@ router.get('/getchapteroverview', authenticateCookie, async (req, res) => {
 			}
 		]);
 
-		const summary = await ChapterSummary.findOne({ chapter_id: membership.chapter_id });
+		const userMembership = await Membership.findOne({
+			user_id: userObj._id,
+			membership_status: true
+		});
+		if (!userMembership) {
+			return res.status(404).json({ error: "Active membership not found for user." });
+		}
 
+		const chapterMemberships = await Membership.find({
+			chapter_id: userMembership.chapter_id,
+			membership_status: true
+		}).select('user_id');
+
+		const chapterUserIds = chapterMemberships.map(m => m.user_id);
+		if (chapterUserIds.length === 0) {
+			return res.status(200).json([]);
+		}
+
+		const results = await TYFTB.aggregate([
+			{ $match: { payer_id: { $in: chapterUserIds } } },
+			{
+				$group: {
+					_id: '$payer_id',
+					totalBusinessAmount: { $sum: '$business_amount' },
+					payer: { $first: '$payer' },
+					records: { $push: '$$ROOT' }
+				}
+			}
+		]);
+
+		const summary = await ChapterSummary.findOne({ chapter_id: membership.chapter_id });
+		const totalRevenue = parseInt(results[0]?.totalBusinessAmount ?? 0, 10);
 		res.status(200).json({
 			chapterName: chapter.chapter_name ?? "",
 			nextMeeting: doc?.meeting_date ? formatDate(doc.meeting_date) : "No upcoming meeting",
-			totalMembers: chapter.current_member_count ?? 0,
-			totalRevenue: summary?.total_business ?? 0,
+			totalMembers: membercount ?? 0,
+			totalRevenue: totalRevenue,
 			totalvisitors: summary?.visitors_total ?? 0,
 		});
 	} catch (err) {
+		console.log(err)
 		res.status(500).json({ error: "Internal server error." });
 	}
 });
