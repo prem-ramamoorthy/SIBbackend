@@ -85,7 +85,7 @@ router.put("/updateProfile", authenticateUser, updateProfileValidator, handleVal
   }
 });
 
-router.post("/resetPassword", resetPasswordValidator, handleValidation, authenticateUser, async (req, res) => {
+router.post("/resetPassword", resetPasswordValidator, handleValidation, async (req, res) => {
   const { email } = req.body;
   try {
     const link = await admin.auth().generatePasswordResetLink(email);
