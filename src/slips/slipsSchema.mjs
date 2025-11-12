@@ -138,8 +138,6 @@ const referralSchema = new Schema(
   }
 );
 
-referralSchema.index({ referral_code: 1 }, { unique: true });
-
 export const Referral = mongoose.model("referrals", referralSchema);
 
 const visitorSchema = new Schema({

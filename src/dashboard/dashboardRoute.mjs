@@ -556,7 +556,7 @@ router.get('/caneditevents', authenticateCookie, async (req, res) => {
 		if (!membership || !membership.chapter_id) {
 			return res.status(404).json({ error: "Membership or chapter not found." });
 		}
-		if (membership.role === "president" || membership.role === "admin" || membership.role === "coordinator") {
+		if (membership.role === "president" || membership.role === "admin") {
 			res.status(200).json({ hasaccess: true });
 		}
 		else {
