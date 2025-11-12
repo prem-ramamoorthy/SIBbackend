@@ -4,7 +4,7 @@ import { Referral, TYFTB, OneToOneMeeting, Visitor } from '../slips/slipsSchema.
 import User from '../../Auth/Schemas.mjs';
 import { Membership } from '../chapter/ChapterSchema.mjs';
 
-const router = express.Router() ;
+const router = express.Router();
 
 router.get('/getactivity', authenticateCookie, async (req, res) => {
     try {
@@ -196,8 +196,8 @@ router.get('/getactivity-details', authenticateCookie, async (req, res) => {
 
         const validTypes = ['all', 'tyftb', 'm2m', 'referral'];
         if (!validTypes.includes(type)) {
-            return res.status(400).json({ 
-                error: `Invalid type. Must be one of: ${validTypes.join(', ')}` 
+            return res.status(400).json({
+                error: `Invalid type. Must be one of: ${validTypes.join(', ')}`
             });
         }
 
@@ -289,15 +289,15 @@ router.get('/getactivity-details', authenticateCookie, async (req, res) => {
 
                     tyftbMap.set(item._id.toString(), {
                         _id: item._id,
-                        payer: item.payer_id && item.payer_id._id ? { 
-                            _id: item.payer_id._id, 
-                            name: item.payer_id.username || '', 
-                            email: item.payer_id.email || '' 
+                        payer: item.payer_id && item.payer_id._id ? {
+                            _id: item.payer_id._id,
+                            name: item.payer_id.username || '',
+                            email: item.payer_id.email || ''
                         } : { _id: null, name: 'Unknown', email: '' },
-                        receiver: item.receiver_id && item.receiver_id._id ? { 
-                            _id: item.receiver_id._id, 
-                            name: item.receiver_id.username || '', 
-                            email: item.receiver_id.email || '' 
+                        receiver: item.receiver_id && item.receiver_id._id ? {
+                            _id: item.receiver_id._id,
+                            name: item.receiver_id.username || '',
+                            email: item.receiver_id.email || ''
                         } : { _id: null, name: 'Unknown', email: '' },
                         business_type: item.business_type || '',
                         referral_type: item.referral_type || '',
@@ -351,15 +351,15 @@ router.get('/getactivity-details', authenticateCookie, async (req, res) => {
 
                     referralMap.set(item._id.toString(), {
                         _id: item._id,
-                        referrer: item.referrer_id && item.referrer_id._id ? { 
-                            _id: item.referrer_id._id, 
-                            name: item.referrer_id.username || '', 
-                            email: item.referrer_id.email || '' 
+                        referrer: item.referrer_id && item.referrer_id._id ? {
+                            _id: item.referrer_id._id,
+                            name: item.referrer_id.username || '',
+                            email: item.referrer_id.email || ''
                         } : { _id: null, name: 'Unknown', email: '' },
-                        referee: item.referee_id && item.referee_id._id ? { 
-                            _id: item.referee_id._id, 
-                            name: item.referee_id.username || '', 
-                            email: item.referee_id.email || '' 
+                        referee: item.referee_id && item.referee_id._id ? {
+                            _id: item.referee_id._id,
+                            name: item.referee_id.username || '',
+                            email: item.referee_id.email || ''
                         } : { _id: null, name: 'Unknown', email: '' },
                         contact_name: item.contact_name || '',
                         description: item.description || '',
@@ -419,24 +419,24 @@ router.get('/getactivity-details', authenticateCookie, async (req, res) => {
 
                     m2mMap.set(item._id.toString(), {
                         _id: item._id,
-                        member1: item.member1_id && item.member1_id._id ? { 
-                            _id: item.member1_id._id, 
-                            name: item.member1_id.username || '', 
-                            email: item.member1_id.email || '' 
+                        member1: item.member1_id && item.member1_id._id ? {
+                            _id: item.member1_id._id,
+                            name: item.member1_id.username || '',
+                            email: item.member1_id.email || ''
                         } : { _id: null, name: 'Unknown', email: '' },
-                        member2: item.member2_id && item.member2_id._id ? { 
-                            _id: item.member2_id._id, 
-                            name: item.member2_id.username || '', 
-                            email: item.member2_id.email || '' 
+                        member2: item.member2_id && item.member2_id._id ? {
+                            _id: item.member2_id._id,
+                            name: item.member2_id.username || '',
+                            email: item.member2_id.email || ''
                         } : { _id: null, name: 'Unknown', email: '' },
                         chapter_id: item.chapter_id,
                         meeting_date: item.meeting_date,
                         location: item.location || '',
                         discussion_points: item.discussion_points || '',
-                        created_by: item.created_by && item.created_by._id ? { 
-                            _id: item.created_by._id, 
-                            name: item.created_by.username || '', 
-                            email: item.created_by.email || '' 
+                        created_by: item.created_by && item.created_by._id ? {
+                            _id: item.created_by._id,
+                            name: item.created_by.username || '',
+                            email: item.created_by.email || ''
                         } : { _id: null, name: 'Unknown', email: '' },
                         createdAt: item.createdAt,
                         direction: member1Id === userIdStr ? 'given' : 'received',
@@ -464,10 +464,10 @@ router.get('/getactivity-details', authenticateCookie, async (req, res) => {
 
             const visitorWithType = visitorData.map(item => ({
                 _id: item._id,
-                inviting_member: item.inviting_member_id && item.inviting_member_id._id ? { 
-                    _id: item.inviting_member_id._id, 
-                    name: item.inviting_member_id.username || '', 
-                    email: item.inviting_member_id.email || '' 
+                inviting_member: item.inviting_member_id && item.inviting_member_id._id ? {
+                    _id: item.inviting_member_id._id,
+                    name: item.inviting_member_id.username || '',
+                    email: item.inviting_member_id.email || ''
                 } : { _id: null, name: 'Unknown', email: '' },
                 visitor_name: item.visitor_name || '',
                 visitor_company: item.visitor_company || '',
@@ -477,10 +477,10 @@ router.get('/getactivity-details', authenticateCookie, async (req, res) => {
                 industry: item.industry || '',
                 presentation_given: item.presentation_given || false,
                 converted_to_member: item.converted_to_member || false,
-                member_user: item.member_user_id && item.member_user_id._id ? { 
-                    _id: item.member_user_id._id, 
-                    name: item.member_user_id.username || '', 
-                    email: item.member_user_id.email || '' 
+                member_user: item.member_user_id && item.member_user_id._id ? {
+                    _id: item.member_user_id._id,
+                    name: item.member_user_id.username || '',
+                    email: item.member_user_id.email || ''
                 } : { _id: null, name: 'Unknown', email: '' },
                 createdAt: item.createdAt,
                 direction: 'given',
@@ -494,139 +494,268 @@ router.get('/getactivity-details', authenticateCookie, async (req, res) => {
         return res.status(200).json(result);
     } catch (err) {
         console.error('Error fetching activity details:', err);
-        return res.status(500).json({ 
-            error: "Internal server error.", 
-            details: err.message 
+        return res.status(500).json({
+            error: "Internal server error.",
+            details: err.message
         });
     }
 });
 
 router.get('/getactivityofusers', authenticateCookie, async (req, res) => {
-  try {
-    const userId = req.user && req.user.uid;
-    if (!userId) {
-      return res.status(400).json({ error: "Missing user id." });
-    }
-
-    const userObj = await User.findOne({ user_id: userId });
-    if (!userObj) {
-      return res.status(404).json({ error: "User not found." });
-    }
-
-    const membership = await Membership.findOne({
-      user_id: userObj._id,
-      membership_status: true
-    });
-    if (!membership) {
-      return res.status(404).json({ error: "Membership not found." });
-    }
-
-    const allMemberships = await Membership.find({
-      chapter_id: membership.chapter_id,
-      membership_status: true
-    }).populate('user_id', 'username email _id');
-
-    if (!allMemberships || allMemberships.length === 0) {
-      return res.status(200).json([]);
-    }
-
-    const results = await Promise.all(
-      allMemberships.map(async (mem) => {
-        const user = mem.user_id;
-        if (!user || !user._id) return null;
-
-        try {
-          const [
-            referralsGiven,
-            referralsReceived,
-            tyftbGiven,
-            tyftbReceived,
-            m2mCount,
-            visitorsBrought
-          ] = await Promise.all([
-            Referral.countDocuments({ referrer_id: user._id }),
-            Referral.countDocuments({ referee_id: user._id }),
-            TYFTB.countDocuments({ payer_id: user._id }),
-            TYFTB.countDocuments({ receiver_id: user._id }),
-            OneToOneMeeting.countDocuments({
-              $or: [
-                { member1_id: user._id },
-                { member2_id: user._id }
-              ]
-            }),
-            Visitor.countDocuments({ inviting_member_id: user._id })
-          ]);
-
-          const [givenAgg, receivedAgg] = await Promise.all([
-            TYFTB.aggregate([
-              { $match: { payer_id: user._id } },
-              { $group: { _id: null, total: { $sum: '$business_amount' } } }
-            ]),
-            TYFTB.aggregate([
-              { $match: { receiver_id: user._id } },
-              { $group: { _id: null, total: { $sum: '$business_amount' } } }
-            ])
-          ]);
-
-          const businessGiven = givenAgg[0]?.total || 0;
-          const businessReceived = receivedAgg[0]?.total || 0;
-          const businessMade = (businessReceived) || 0;
-
-          return {
-            id: user._id.toString(),
-            rank: 0,
-            name: user.username || "Unknown",
-            referralsGiven: Number(referralsGiven) || 0,
-            referralsReceived: Number(referralsReceived) || 0,
-            tyftbGiven: Number(tyftbGiven) || 0,
-            tyftbReceived: Number(tyftbReceived) || 0,
-            businessMade: Number(businessGiven) || 0,
-            businessGiven: Number(businessMade) || 0,
-            mToM: Number(m2mCount) || 0,
-            visitorsBrought: Number(visitorsBrought) || 0
-          };
-        } catch (err) {
-          console.error(`Error processing user ${user._id}:`, err);
-          return null;
+    try {
+        const userId = req.user && req.user.uid;
+        if (!userId) {
+            return res.status(400).json({ error: "Missing user id." });
         }
-      })
-    );
 
-    const filtered = results.filter(item => item !== null);
+        const userObj = await User.findOne({ user_id: userId });
+        if (!userObj) {
+            return res.status(404).json({ error: "User not found." });
+        }
 
-    if (filtered.length === 0) {
-      return res.status(200).json([]);
+        const membership = await Membership.findOne({
+            user_id: userObj._id,
+            membership_status: true
+        });
+        if (!membership) {
+            return res.status(404).json({ error: "Membership not found." });
+        }
+
+        const allMemberships = await Membership.find({
+            chapter_id: membership.chapter_id,
+            membership_status: true
+        }).populate('user_id', 'username email _id');
+
+        if (!allMemberships || allMemberships.length === 0) {
+            return res.status(200).json([]);
+        }
+
+        const results = await Promise.all(
+            allMemberships.map(async (mem) => {
+                const user = mem.user_id;
+                if (!user || !user._id) return null;
+
+                try {
+                    const [
+                        referralsGiven,
+                        referralsReceived,
+                        tyftbGiven,
+                        tyftbReceived,
+                        m2mCount,
+                        visitorsBrought
+                    ] = await Promise.all([
+                        Referral.countDocuments({ referrer_id: user._id }),
+                        Referral.countDocuments({ referee_id: user._id }),
+                        TYFTB.countDocuments({ payer_id: user._id }),
+                        TYFTB.countDocuments({ receiver_id: user._id }),
+                        OneToOneMeeting.countDocuments({
+                            $or: [
+                                { member1_id: user._id },
+                                { member2_id: user._id }
+                            ]
+                        }),
+                        Visitor.countDocuments({ inviting_member_id: user._id })
+                    ]);
+
+                    const [givenAgg, receivedAgg] = await Promise.all([
+                        TYFTB.aggregate([
+                            { $match: { payer_id: user._id } },
+                            { $group: { _id: null, total: { $sum: '$business_amount' } } }
+                        ]),
+                        TYFTB.aggregate([
+                            { $match: { receiver_id: user._id } },
+                            { $group: { _id: null, total: { $sum: '$business_amount' } } }
+                        ])
+                    ]);
+
+                    const businessGiven = givenAgg[0]?.total || 0;
+                    const businessReceived = receivedAgg[0]?.total || 0;
+                    const businessMade = (businessReceived) || 0;
+
+                    return {
+                        id: user._id.toString(),
+                        rank: 0,
+                        name: user.username || "Unknown",
+                        referralsGiven: Number(referralsGiven) || 0,
+                        referralsReceived: Number(referralsReceived) || 0,
+                        tyftbGiven: Number(tyftbGiven) || 0,
+                        tyftbReceived: Number(tyftbReceived) || 0,
+                        businessMade: Number(businessGiven) || 0,
+                        businessGiven: Number(businessMade) || 0,
+                        mToM: Number(m2mCount) || 0,
+                        visitorsBrought: Number(visitorsBrought) || 0
+                    };
+                } catch (err) {
+                    console.error(`Error processing user ${user._id}:`, err);
+                    return null;
+                }
+            })
+        );
+
+        const filtered = results.filter(item => item !== null);
+
+        if (filtered.length === 0) {
+            return res.status(200).json([]);
+        }
+
+        filtered.sort((a, b) => {
+            if (b.businessGiven !== a.businessGiven) {
+                return b.businessGiven - a.businessGiven;
+            }
+            if (b.businessMade !== a.businessMade) {
+                return b.businessMade - a.businessMade;
+            }
+            if (b.referralsGiven !== a.referralsGiven) {
+                return b.referralsGiven - a.referralsGiven;
+            }
+            if (b.tyftbGiven !== a.tyftbGiven) {
+                return b.tyftbGiven - a.tyftbGiven;
+            }
+            return b.mToM - a.mToM;
+        });
+
+        filtered.forEach((item, idx) => {
+            item.rank = idx + 1;
+        });
+
+        return res.status(200).json(filtered);
+
+    } catch (err) {
+        console.error('Error fetching activity details:', err);
+        return res.status(500).json({
+            error: "Internal server error.",
+            details: err.message || "Unknown error"
+        });
     }
-
-    filtered.sort((a, b) => {
-      if (b.businessGiven !== a.businessGiven) {
-        return b.businessGiven - a.businessGiven;
-      }
-      if (b.businessMade !== a.businessMade) {
-        return b.businessMade - a.businessMade;
-      }
-      if (b.referralsGiven !== a.referralsGiven) {
-        return b.referralsGiven - a.referralsGiven;
-      }
-      if (b.tyftbGiven !== a.tyftbGiven) {
-        return b.tyftbGiven - a.tyftbGiven;
-      }
-      return b.mToM - a.mToM;
-    });
-
-    filtered.forEach((item, idx) => {
-      item.rank = idx + 1;
-    });
-
-    return res.status(200).json(filtered);
-
-  } catch (err) {
-    console.error('Error fetching activity details:', err);
-    return res.status(500).json({
-      error: "Internal server error.",
-      details: err.message || "Unknown error"
-    });
-  }
 });
+
+router.get('/getactivityofusersfalse', authenticateCookie, async (req, res) => {
+    try {
+        const userId = req.user && req.user.uid;
+        if (!userId) {
+            return res.status(400).json({ error: "Missing user id." });
+        }
+
+        const userObj = await User.findOne({ user_id: userId });
+        if (!userObj) {
+            return res.status(404).json({ error: "User not found." });
+        }
+
+        const membership = await Membership.findOne({
+            user_id: userObj._id,
+            membership_status: true
+        });
+        if (!membership) {
+            return res.status(404).json({ error: "Membership not found." });
+        }
+
+        const allMemberships = await Membership.find({
+            chapter_id: membership.chapter_id,
+            membership_status: true
+        }).populate('user_id', 'username email _id');
+
+        if (!allMemberships || allMemberships.length === 0) {
+            return res.status(200).json([]);
+        }
+
+        const results = await Promise.all(
+            allMemberships.map(async (mem) => {
+                const user = mem.user_id;
+                if (!user || !user._id) return null;
+
+                try {
+                    const [
+                        referralsGiven,
+                        referralsReceived,
+                        tyftbGiven,
+                        tyftbReceived,
+                        m2mCount,
+                        visitorsBrought
+                    ] = await Promise.all([
+                        Referral.countDocuments({ referrer_id: user._id, status: false }),
+                        Referral.countDocuments({ referee_id: user._id, status: false }),
+                        TYFTB.countDocuments({ payer_id: user._id, status: false }),
+                        TYFTB.countDocuments({ receiver_id: user._id, status: false }),
+                        OneToOneMeeting.countDocuments({
+                            $or: [
+                                { member1_id: user._id },
+                                { member2_id: user._id }
+                            ], status: false
+                        }),
+                        Visitor.countDocuments({ inviting_member_id: user._id, status: false })
+                    ]);
+
+                    const [givenAgg, receivedAgg] = await Promise.all([
+                        TYFTB.aggregate([
+                            { $match: { payer_id: user._id, status: false } },
+                            { $group: { _id: null, total: { $sum: '$business_amount' } } }
+                        ]),
+                        TYFTB.aggregate([
+                            { $match: { receiver_id: user._id, status: false } },
+                            { $group: { _id: null, total: { $sum: '$business_amount' } } }
+                        ])
+                    ]);
+
+                    const businessGiven = givenAgg[0]?.total || 0;
+                    const businessReceived = receivedAgg[0]?.total || 0;
+                    const businessMade = (businessReceived) || 0;
+
+                    return {
+                        id: user._id.toString(),
+                        rank: 0,
+                        name: user.username || "Unknown",
+                        referralsGiven: Number(referralsGiven) || 0,
+                        referralsReceived: Number(referralsReceived) || 0,
+                        tyftbGiven: Number(tyftbGiven) || 0,
+                        tyftbReceived: Number(tyftbReceived) || 0,
+                        businessMade: Number(businessGiven) || 0,
+                        businessGiven: Number(businessMade) || 0,
+                        mToM: Number(m2mCount) || 0,
+                        visitorsBrought: Number(visitorsBrought) || 0
+                    };
+                } catch (err) {
+                    console.error(`Error processing user ${user._id}:`, err);
+                    return null;
+                }
+            })
+        );
+
+        const filtered = results.filter(item => item !== null);
+
+        if (filtered.length === 0) {
+            return res.status(200).json([]);
+        }
+
+        filtered.sort((a, b) => {
+            if (b.businessGiven !== a.businessGiven) {
+                return b.businessGiven - a.businessGiven;
+            }
+            if (b.businessMade !== a.businessMade) {
+                return b.businessMade - a.businessMade;
+            }
+            if (b.referralsGiven !== a.referralsGiven) {
+                return b.referralsGiven - a.referralsGiven;
+            }
+            if (b.tyftbGiven !== a.tyftbGiven) {
+                return b.tyftbGiven - a.tyftbGiven;
+            }
+            return b.mToM - a.mToM;
+        });
+
+        filtered.forEach((item, idx) => {
+            item.rank = idx + 1;
+        });
+
+        return res.status(200).json(filtered);
+
+    } catch (err) {
+        console.error('Error fetching activity details:', err);
+        return res.status(500).json({
+            error: "Internal server error.",
+            details: err.message || "Unknown error"
+        });
+    }
+});
+
 
 export default router;

@@ -74,17 +74,26 @@ router.get('/getalltyftb', authenticateCookie, async (req, res) => {
         const results = await TYFTB.aggregate([
             { $match: { payer_id: { $in: chapterUserIds } } },
             {
-                $group: {
-                    _id: '$payer_id',
-                    totalBusinessAmount: { $sum: '$business_amount' },
-                    payer: { $first: '$payer' },
-                    records: { $push: '$$ROOT' }
+                $lookup: {
+                    from: 'users',
+                    localField: 'payer_id',
+                    foreignField: '_id',
+                    as: 'payer'
                 }
-            }
+            },
+            { $unwind: { path: "$payer", preserveNullAndEmptyArrays: true } },
+            {
+                $lookup: {
+                    from: 'users',
+                    localField: 'receiver_id',
+                    foreignField: '_id',
+                    as: 'receiver'
+                }
+            },
+            { $unwind: { path: "$receiver", preserveNullAndEmptyArrays: true } }
         ]);
 
-
-        return res.status(200).json(results.totalBusinessAmount);
+        return res.status(200).json(results);
     } catch (error) {
         console.error('Error in /getalltyftb:', error);
         return res.status(500).json({ error: error.message });

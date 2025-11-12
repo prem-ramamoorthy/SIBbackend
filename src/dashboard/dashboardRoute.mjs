@@ -568,4 +568,34 @@ router.get('/caneditevents', authenticateCookie, async (req, res) => {
 	}
 });
 
+router.get('/coordinatoraccess', authenticateCookie, async (req, res) => {
+  try {
+    const firebaseUid = req.user && req.user.uid;
+    if (!firebaseUid) {
+      return res.status(400).json({ error: "Missing user id." });
+    }
+
+    const userObj = await User.findOne({ user_id: firebaseUid }).lean();
+    if (!userObj || !userObj._id) {
+      return res.status(404).json({ error: "User not found." });
+    }
+
+    const membership = await Membership.findOne({
+      user_id: userObj._id,
+      membership_status: true
+    }).lean();
+
+    if (!membership || !membership.chapter_id) {
+      return res.status(404).json({ error: "Membership or chapter not found." });
+    }
+
+    const hasaccess = ["admin", "coordinator"].includes(membership.role);
+    return res.status(200).json({ hasaccess });
+
+  } catch (err) {
+    console.error('Error fetching coordinator access:', err);
+    return res.status(500).json({ error: "Internal server error." });
+  }
+});
+
 export default router;
