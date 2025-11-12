@@ -12,7 +12,8 @@ export const createMeetingValidation = [
   body('location').isString().notEmpty(),
   body('meeting_notes').isString().optional(),
   body('duration').isNumeric().optional(),
-  body('meeting_status').isString().isLength({ max: 50 }).notEmpty()
+  body('meeting_status').isString().isLength({ max: 50 }).notEmpty(),
+  body('attendance_status').isBoolean().notEmpty(),
 ];
 
 export const updateMeetingValidation = [
@@ -24,6 +25,7 @@ export const updateMeetingValidation = [
   body('location').optional().isString(),
   body('meeting_notes').optional().isString(),
   body('duration').optional().isNumeric(),
+  body('attendance_status').isBoolean().optional(),
   body('meeting_status').optional().isBoolean().isLength({ max: 20 })
 ];
 

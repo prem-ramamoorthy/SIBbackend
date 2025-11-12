@@ -60,6 +60,9 @@ const meetingSchema = new Schema(
       required: true,
       trim: true,
       maxLength: 20
+    } , 
+    attendance_status : {
+      type : Boolean
     }
   },
   {

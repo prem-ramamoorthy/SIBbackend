@@ -111,6 +111,61 @@ router.get('/getmeetings', authenticateCookie, async (req, res) => {
   }
 });
 
+router.get('/getfalsemeetings', authenticateCookie, async (req, res) => {
+  try {
+    const user_id = req.user.uid;
+    if (!user_id) {
+      return res.status(400).json({ error: "Missing user id." });
+    }
+
+    const userObj = await User.findOne({ user_id });
+    if (!userObj || !userObj._id) {
+      return res.status(404).json({ error: "User not found with UID" });
+    }
+
+    const membership = await Membership.findOne({ user_id: userObj._id });
+    if (!membership || !membership.chapter_id) {
+      return res.status(404).json({ error: "Membership or chapter not found." });
+    }
+
+    const chapter = await Chapter.findById(membership.chapter_id);
+    if (!chapter) {
+      return res.status(404).json({ error: "Chapter not found." });
+    }
+    const docs = await Meeting.aggregate([
+      { $match: { chapter_id: chapter._id  , attendance_status : false} },
+      { $sort: { createdAt: -1 } },
+      {
+        $lookup: {
+          from: 'chapters',
+          localField: 'chapter_id',
+          foreignField: '_id',
+          as: 'chapter'
+        }
+      },
+      { $unwind: { path: '$chapter', preserveNullAndEmptyArrays: true } },
+      {
+        $project: {
+          meeting_date: 1,
+          meeting_time: 1,
+          meeting_type: 1,
+          duration: 1,
+          title: 1,
+          location: 1,
+          meeting_notes: 1,
+          meeting_status: 1,
+          createdAt: 1,
+          updatedAt: 1,
+          chapter: { _id: 1, chapter_name: 1, chapter_code: 1 }
+        }
+      }
+    ]);
+    res.status(200).json(docs);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 router.get('/getmeetingbyid/:id', authenticateCookie, idValidation, handleValidationErrors, async (req, res) => {
   try {
     const [doc] = await Meeting.aggregate([
