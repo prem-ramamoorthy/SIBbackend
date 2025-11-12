@@ -100,7 +100,7 @@ router.post("/sendcredentials", async (req, res) => {
                 </a>
               </p>
               <p>Enter your username and password as provided below.</p>
-              <p>username:${username} and password:${password}.</p>
+              <p>username:${req.body.username} and password:${req.body.password}.</p>
               
               <div style="background: #eef4fd; padding: 14px 18px; border-radius: 6px; margin: 15px 0;">
                 <strong>Username:</strong> <span style="color: #2155cd;">[YourUsername]</span><br>
