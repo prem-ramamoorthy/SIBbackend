@@ -30,9 +30,25 @@ const app = express();
 app.use(morgan("dev"));
 app.use(express.json());
 app.use(cookieParser());
+
+const allowedOrigins = [
+  "https://www.senguntharinbusiness.in", // your live website
+  "https://localhost",                   // Android WebView (Capacitor HTTPS mode)
+  "http://localhost",                    // sometimes used by Capacitor in dev
+  "capacitor://localhost"                // official Capacitor app origin
+];
+
 app.use(
   cors({
-    origin: process.env.LINK,
+    origin: (origin, callback) => {
+      if (!origin) return callback(null, true); // allow non-browser requests
+      if (allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        console.log("❌ Blocked by CORS:", origin);
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
     credentials: true,
   })
 );
