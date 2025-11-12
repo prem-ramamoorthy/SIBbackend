@@ -38,18 +38,15 @@ router.post("/signup", signupValidator, handleValidation, async (req, res) => {
                 </a>
               </p>
               <p>Enter your username and password as provided below.</p>
-              
               <div style="background: #eef4fd; padding: 14px 18px; border-radius: 6px; margin: 15px 0;">
                 <strong>Username:</strong> <span style="color: #2155cd;">[${req.body.username}]</span><br>
                 <strong>Password:</strong> <span style="color: #2155cd;">[${req.body.password}]</span>
               </div>
-              
-              <h3 style="color: #1a7f37; margin-bottom: 8px;">Important:</h3>
+              <h3 style="color: #ff0000;margin-bottom: 8px;">Important:</h3>
               <ul style="margin: 0 0 12px 18px;">
                 <li>Please change your password after your first login for security purposes.</li>
                 <li>Keep your credentials confidential and do not share them with anyone.</li>
               </ul>
-              
               <div style="background: #fff1c6; padding: 10px 18px; border-radius: 6px;">
                 <strong>Password Change Steps:</strong>
                 <ol style="margin: 9px 0 0 21px;">
@@ -60,13 +57,13 @@ router.post("/signup", signupValidator, handleValidation, async (req, res) => {
                   <li>Click <b>Change Password</b></li>
                 </ol>
               </div>
-              
-              <p style="margin-top: 16px;">
+            </div>
+            <div style="max-width: 480px; margin: auto; margin-top: 14px; padding: 0 24px;">
+              <p style="margin-top: 18px;">
                 If you face any issues logging in or have any questions, please reply to this email or contact our support team:<br>
                 <a href="mailto:sibconnect2025@gmail.com" style="color: #2155cd;">sibconnect2025@gmail.com</a><br>
                 Phone: <b>9842875676</b>
               </p>
-              
               <p style="margin-top: 20px;">
                 <strong>Best regards,</strong><br>
                 SIB Development Team
