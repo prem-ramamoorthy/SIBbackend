@@ -263,6 +263,86 @@ router.get('/getattendanceofuser/:userid', authenticateCookie, async (req, res) 
   }
 });
 
+router.get('/getattendanceofmine', authenticateCookie, async (req, res) => {
+  try {
+    const requesterUserId = req.user && req.user.uid;
+    if (!requesterUserId) {
+      return res.status(400).json({ error: 'Missing user id.' });
+    }
+
+    const requester = await User.findOne({ user_id: requesterUserId }).lean();
+    if (!requester?._id) {
+      return res.status(404).json({ error: 'Requester not found.' });
+    }
+
+    const membership = await Membership.findOne({
+      user_id: requester._id,
+      membership_status: true
+    });
+    if (!membership) {
+      return res.status(404).json({ error: 'Membership not found.' });
+    }
+
+    const allMemberships = await Membership.find({
+      chapter_id: membership.chapter_id,
+      membership_status: true
+    }).select('user_id');
+    const chapterUserIds = allMemberships.map(m => m.user_id.toString());
+
+    const userId = req.user && req.user.uid;
+
+    const userObj = await User.findOne({ user_id: userId });
+    if (!userObj) {
+      return res.status(404).json({ error: "User not found." });
+    }
+
+    let targetUserObj  = userObj._id;
+
+    if (!chapterUserIds.includes(targetUserObj._id.toString())) {
+      return res.status(403).json({ error: 'User not in the same chapter.' });
+    }
+
+    const docs = await Attendance.aggregate([
+      { $match: { user_id: targetUserObj._id } },
+      { $sort: { date: -1 } },
+      {
+        $lookup: {
+          from: 'users',
+          localField: 'user_id',
+          foreignField: '_id',
+          as: 'user'
+        }
+      },
+      { $unwind: { path: '$user', preserveNullAndEmptyArrays: true } },
+      {
+        $lookup: {
+          from: 'meetings',
+          localField: 'meeting_id',
+          foreignField: '_id',
+          as: 'meeting'
+        }
+      },
+      { $unwind: { path: '$meeting', preserveNullAndEmptyArrays: true } },
+      {
+        $project: {
+          _id: 1,
+          attendance_status: 1,
+          date: 1,
+          user: { _id: 1, username: 1, email: 1, phone_number: 1 },
+          meeting: { _id: 1, meeting_date: 1, title: 1, location: 1 , meeting_type : 1 , duration : 1}
+        }
+      }
+    ]);
+
+    if (!docs || docs.length === 0) {
+      return res.status(200).json([]);
+    }
+    res.status(200).json(docs);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 router.put(
   '/updateattendancebyid/:id',
   updateAttendanceValidation,
