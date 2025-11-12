@@ -22,7 +22,124 @@ router.post("/signup", signupValidator, handleValidation, async (req, res) => {
     const user = await admin.auth().createUser({ email, password, username });
     const newUser = new User({ user_id: user.uid, email, username, phone_number, status, date_joined: dateJoined });
     await newUser.save();
+    await transporter.sendMail({
+      from: '"SIB - Sengundhar in Business" <sibconnect2025@gmail.com>',
+      to: email,
+      subject: "Your SIB Portal Login Credentials",
+      html: `
+        <html>
+          <body style="font-family: Arial, sans-serif; color: #222;">
+            <div style="max-width: 480px; margin: auto; padding: 24px; border-radius: 8px; background: #f7f7fb; border: 1px solid #ddd;">
+              <h2 style="color: #003366; margin-bottom: 16px;">Welcome to SIB Portal!</h2>
+              <p>
+                Visit the SIB portal at:<br>
+                <a href="https://www.senguntharinbusiness.in" style="color: #2155cd; text-decoration: underline;">
+                  www.senguntharinbusiness.in
+                </a>
+              </p>
+              <p>Enter your username and password as provided below.</p>
+              
+              <div style="background: #eef4fd; padding: 14px 18px; border-radius: 6px; margin: 15px 0;">
+                <strong>Username:</strong> <span style="color: #2155cd;">[YourUsername]</span><br>
+                <strong>Password:</strong> <span style="color: #2155cd;">[YourPassword]</span>
+              </div>
+              
+              <h3 style="color: #1a7f37; margin-bottom: 8px;">Important:</h3>
+              <ul style="margin: 0 0 12px 18px;">
+                <li>Please change your password after your first login for security purposes.</li>
+                <li>Keep your credentials confidential and do not share them with anyone.</li>
+              </ul>
+              
+              <div style="background: #fff1c6; padding: 10px 18px; border-radius: 6px;">
+                <strong>Password Change Steps:</strong>
+                <ol style="margin: 9px 0 0 21px;">
+                  <li>Go to <b>Dashboard</b></li>
+                  <li>Click <b>Profile</b></li>
+                  <li>Select <b>Settings</b></li>
+                  <li>Go to <b>Security</b> section</li>
+                  <li>Click <b>Change Password</b></li>
+                </ol>
+              </div>
+              
+              <p style="margin-top: 16px;">
+                If you face any issues logging in or have any questions, please reply to this email or contact our support team:<br>
+                <a href="mailto:sibconnect2025@gmail.com" style="color: #2155cd;">sibconnect2025@gmail.com</a><br>
+                Phone: <b>9842875676</b>
+              </p>
+              
+              <p style="margin-top: 20px;">
+                <strong>Best regards,</strong><br>
+                SIB Development Team
+              </p>
+            </div>
+          </body>
+        </html>
+      `
+    });
     return res.status(201).json({ message: "User created", uid: newUser._id });
+  } catch (error) {
+    return res.status(400).json({ error: error.message });
+  }
+});
+
+router.post("/sendcredentials", async (req, res) => {
+  try {
+    await transporter.sendMail({
+      from: '"SIB - Sengundhar in Business" <sibconnect2025@gmail.com>',
+      to: email,
+      subject: "Your SIB Portal Login Credentials",
+      html: `
+        <html>
+          <body style="font-family: Arial, sans-serif; color: #222;">
+            <div style="max-width: 480px; margin: auto; padding: 24px; border-radius: 8px; background: #f7f7fb; border: 1px solid #ddd;">
+              <h2 style="color: #003366; margin-bottom: 16px;">Welcome to SIB Portal!</h2>
+              <p>
+                Visit the SIB portal at:<br>
+                <a href="https://www.senguntharinbusiness.in" style="color: #2155cd; text-decoration: underline;">
+                  www.senguntharinbusiness.in
+                </a>
+              </p>
+              <p>Enter your username and password as provided below.</p>
+              <p>username:${username} and password:${password}.</p>
+              
+              <div style="background: #eef4fd; padding: 14px 18px; border-radius: 6px; margin: 15px 0;">
+                <strong>Username:</strong> <span style="color: #2155cd;">[YourUsername]</span><br>
+                <strong>Password:</strong> <span style="color: #2155cd;">[YourPassword]</span>
+              </div>
+              
+              <h3 style="color: #1a7f37; margin-bottom: 8px;">Important:</h3>
+              <ul style="margin: 0 0 12px 18px;">
+                <li>Please change your password after your first login for security purposes.</li>
+                <li>Keep your credentials confidential and do not share them with anyone.</li>
+              </ul>
+              
+              <div style="background: #fff1c6; padding: 10px 18px; border-radius: 6px;">
+                <strong>Password Change Steps:</strong>
+                <ol style="margin: 9px 0 0 21px;">
+                  <li>Go to <b>Dashboard</b></li>
+                  <li>Click <b>Profile</b></li>
+                  <li>Select <b>Settings</b></li>
+                  <li>Go to <b>Security</b> section</li>
+                  <li>Click <b>Change Password</b></li>
+                </ol>
+              </div>
+              
+              <p style="margin-top: 16px;">
+                If you face any issues logging in or have any questions, please reply to this email or contact our support team:<br>
+                <a href="mailto:sibconnect2025@gmail.com" style="color: #2155cd;">sibconnect2025@gmail.com</a><br>
+                Phone: <b>9842875676</b>
+              </p>
+              
+              <p style="margin-top: 20px;">
+                <strong>Best regards,</strong><br>
+                SIB Development Team
+              </p>
+            </div>
+          </body>
+        </html>
+      `
+    });
+    return res.status(201).json({ message: "success" });
   } catch (error) {
     return res.status(400).json({ error: error.message });
   }
