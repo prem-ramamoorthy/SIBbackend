@@ -23,15 +23,11 @@ const profileSchema = new Schema(
       type: Schema.Types.ObjectId,
       ref: 'chapters',
       required: true,
-      index: true,
-      unique: true,
     },
     region_id :{
       type: Schema.Types.ObjectId,
       ref: 'regions',
       required: true,
-      index: true,
-      unique: true,
     },
     profile_image_url: {
       type: String,
