@@ -78,18 +78,25 @@ router.get('/getchapteroverview', authenticateCookie, async (req, res) => {
 		if (chapterUserIds.length === 0) {
 			return res.status(200).json([]);
 		}
-
-		const results = await TYFTB.aggregate([
-			{ $match: { payer_id: { $in: chapterUserIds } } },
-			{
-				$group: {
-					_id: '$payer_id',
-					totalBusinessAmount: { $sum: '$business_amount' },
-					payer: { $first: '$payer' },
-					records: { $push: '$$ROOT' }
+		const results = await TYFTB.aggregate(
+			[
+				{
+					$match: {
+						payer_id: {
+							$in:
+								chapterUserIds
+						}
+					}
+				},
+				{
+					$group: {
+						_id: null,
+						totalBusinessAmount: {
+							$sum: '$business_amount'
+						}
+					}
 				}
-			}
-		]);
+			]);
 
 		const summary = await ChapterSummary.findOne({ chapter_id: membership.chapter_id });
 		const totalRevenue = parseInt(results[0]?.totalBusinessAmount ?? 0, 10);
@@ -424,7 +431,8 @@ router.get('/getactivity/:timeline', authenticateCookie, async (req, res) => {
 			tyftb_received,
 			M2Ms,
 			Visitors,
-			businessAgg
+			businessAgg,
+			business_given
 		] = await Promise.all([
 			Referral.countDocuments(referralGivenFilter),
 			Referral.countDocuments(referralReceivedFilter),
@@ -435,10 +443,15 @@ router.get('/getactivity/:timeline', authenticateCookie, async (req, res) => {
 			TYFTB.aggregate([
 				{ $match: { payer_id: userObj._id, status: true, ...(rangeFilter.createdAt ? rangeFilter : {}) } },
 				{ $group: { _id: null, totalBusiness: { $sum: "$business_amount" } } }
+			]),
+			TYFTB.aggregate([
+				{ $match: { receiver_id: userObj._id, status: true, ...(rangeFilter.createdAt ? rangeFilter : {}) } },
+				{ $group: { _id: null, totalBusiness: { $sum: "$business_amount" } } }
 			])
 		]);
-
+		
 		const business_made = (businessAgg[0]?.totalBusiness) || 0;
+		const business_given1 = (business_given[0]?.totalBusiness) || 0
 
 		return res.status(200).json({
 			timeline,
@@ -449,7 +462,8 @@ router.get('/getactivity/:timeline', authenticateCookie, async (req, res) => {
 			tyftb_received,
 			business_made,
 			M2Ms,
-			Visitors
+			Visitors,
+			business_given1
 		});
 	} catch (err) {
 		console.error('Error fetching activity:', err);
@@ -507,7 +521,8 @@ router.get('/getactivityupcoming/:timeline', authenticateCookie, async (req, res
 			tyftb_received,
 			M2Ms,
 			Visitors,
-			businessAgg
+			businessAgg,
+			business_given
 		] = await Promise.all([
 			Referral.countDocuments(referralGivenFilter),
 			Referral.countDocuments(referralReceivedFilter),
@@ -518,10 +533,16 @@ router.get('/getactivityupcoming/:timeline', authenticateCookie, async (req, res
 			TYFTB.aggregate([
 				{ $match: { payer_id: userObj._id, status: false, ...(rangeFilter.createdAt ? rangeFilter : {}) } },
 				{ $group: { _id: null, totalBusiness: { $sum: "$business_amount" } } }
+			]),
+			TYFTB.aggregate([
+				{ $match: { receiver_id: userObj._id, status: false, ...(rangeFilter.createdAt ? rangeFilter : {}) } },
+				{ $group: { _id: null, totalBusiness: { $sum: "$business_amount" } } }
 			])
 		]);
 
 		const business_made = (businessAgg[0]?.totalBusiness) || 0;
+		const business_given1 = (business_given[0]?.totalBusiness) || 0
+
 
 		return res.status(200).json({
 			timeline,
@@ -532,7 +553,8 @@ router.get('/getactivityupcoming/:timeline', authenticateCookie, async (req, res
 			tyftb_received,
 			business_made,
 			M2Ms,
-			Visitors
+			Visitors,
+			business_given1
 		});
 	} catch (err) {
 		console.error('Error fetching activity:', err);
@@ -569,33 +591,33 @@ router.get('/caneditevents', authenticateCookie, async (req, res) => {
 });
 
 router.get('/coordinatoraccess', authenticateCookie, async (req, res) => {
-  try {
-    const firebaseUid = req.user && req.user.uid;
-    if (!firebaseUid) {
-      return res.status(400).json({ error: "Missing user id." });
-    }
+	try {
+		const firebaseUid = req.user && req.user.uid;
+		if (!firebaseUid) {
+			return res.status(400).json({ error: "Missing user id." });
+		}
 
-    const userObj = await User.findOne({ user_id: firebaseUid }).lean();
-    if (!userObj || !userObj._id) {
-      return res.status(404).json({ error: "User not found." });
-    }
+		const userObj = await User.findOne({ user_id: firebaseUid }).lean();
+		if (!userObj || !userObj._id) {
+			return res.status(404).json({ error: "User not found." });
+		}
 
-    const membership = await Membership.findOne({
-      user_id: userObj._id,
-      membership_status: true
-    }).lean();
+		const membership = await Membership.findOne({
+			user_id: userObj._id,
+			membership_status: true
+		}).lean();
 
-    if (!membership || !membership.chapter_id) {
-      return res.status(404).json({ error: "Membership or chapter not found." });
-    }
+		if (!membership || !membership.chapter_id) {
+			return res.status(404).json({ error: "Membership or chapter not found." });
+		}
 
-    const hasaccess = ["admin", "coordinator"].includes(membership.role);
-    return res.status(200).json({ hasaccess });
+		const hasaccess = ["admin", "coordinator"].includes(membership.role);
+		return res.status(200).json({ hasaccess });
 
-  } catch (err) {
-    console.error('Error fetching coordinator access:', err);
-    return res.status(500).json({ error: "Internal server error." });
-  }
+	} catch (err) {
+		console.error('Error fetching coordinator access:', err);
+		return res.status(500).json({ error: "Internal server error." });
+	}
 });
 
 export default router;
