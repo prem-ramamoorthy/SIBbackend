@@ -85,7 +85,8 @@ router.get('/getchapteroverview', authenticateCookie, async (req, res) => {
 						payer_id: {
 							$in:
 								chapterUserIds
-						}
+						},
+						status : true
 					}
 				},
 				{
