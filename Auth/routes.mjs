@@ -39,7 +39,7 @@ router.post("/signup", signupValidator, handleValidation, async (req, res) => {
               </p>
               <p>Enter your username and password as provided below.</p>
               <div style="background: #eef4fd; padding: 14px 18px; border-radius: 6px; margin: 15px 0;">
-                <strong>Username:</strong> <span style="color: #2155cd;">[${req.body.username}]</span><br>
+                <strong>Username:</strong> <span style="color: #2155cd;">[${email}]</span><br>
                 <strong>Password:</strong> <span style="color: #2155cd;">[${req.body.password}]</span>
               </div>
               <h3 style="color: #ff0000;margin-bottom: 8px;">Important:</h3>
