@@ -612,7 +612,7 @@ router.get('/coordinatoraccess', authenticateCookie, async (req, res) => {
 			return res.status(404).json({ error: "Membership or chapter not found." });
 		}
 
-		const hasaccess = ["admin", "coordinator"].includes(membership.role);
+		const hasaccess = ["admin", "coordinator","president"].includes(membership.role);
 		return res.status(200).json({ hasaccess });
 
 	} catch (err) {
