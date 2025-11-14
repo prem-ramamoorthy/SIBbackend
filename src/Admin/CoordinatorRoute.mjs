@@ -49,9 +49,7 @@ router.get('/getcoordinators', authenticateCookie, async (req, res) => {
         if (!membership || !membership.chapter_id) {
             return res.status(404).json({ error: "Membership or chapter not found." });
         }
-        const { chapter_id } = membership.chapter_id;
-        const filter = chapter_id ? { chapter_id } : {};
-        const coordinators = await Coordinator.find(filter)
+        const coordinators = await Coordinator.find({chapter_id : membership.chapter_id })
         res.json(coordinators);
     } catch (err) {
         res.status(500).json({ error: err.message });
