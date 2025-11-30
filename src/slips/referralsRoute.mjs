@@ -4,7 +4,7 @@ import { Referral } from './slipsSchema.mjs';
 import {
     idValidation,
     createReferralValidation,
-    updateReferralValidation
+    updateReferralValidation, updateBulkReferralValidation
 } from './validator.mjs';
 import { mapNamesToIds, authenticateCookie, handleValidationErrors } from '../middlewares.mjs'
 import { Membership } from '../chapter/ChapterSchema.mjs';
@@ -168,20 +168,19 @@ router.put(
 );
 
 router.put(
-    '/updatereferralstatusbyreferrer/:userid',
+    '/updatebulkreferralstatusbyreferrer',
+    updateBulkReferralValidation,
+    handleValidationErrors,
     authenticateCookie,
     async (req, res) => {
         try {
-            const { userid } = req.params;
-            if (!userid) {
-                return res.status(400).json({ error: "Missing userid parameter." });
-            }
+            const { list } = req.body;
             const result = await Referral.updateMany(
-                { referrer_id: userid },
+                { referrer_id: { $in: list } },
                 { $set: { status: true } }
             );
             if (result.matchedCount === 0) {
-                return res.status(200).json({ message: 'No referrals found for this referrer.' });
+                return res.status(200).json({ message: 'No referrals found for the provided referrers.' });
             }
             res.status(200).json({ message: `Updated ${result.modifiedCount} referrals to status=true.` });
         } catch (e) {

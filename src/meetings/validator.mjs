@@ -36,6 +36,12 @@ export const createAttendanceValidation = [
   body('date').isISO8601().toDate().notEmpty()
 ];
 
+export const createBulkAttendanceValidation = [
+  body('usersdata').isArray().notEmpty(),
+  body('meeting_id').isString().notEmpty(),
+  body('date').isISO8601().toDate().notEmpty()
+];
+
 export const updateAttendanceValidation = [
   param('id').isMongoId(),
   body('username').optional().isString(),

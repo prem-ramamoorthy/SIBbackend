@@ -59,6 +59,18 @@ export const updateReferralValidation = [
   body('status').isBoolean().optional(),
 ];
 
+export const updateBulkM2MStatusValidation = [
+  body('list').isArray().notEmpty(),
+]
+
+export const updateBulkTyftbValidation = [
+  body('list').isArray().notEmpty(),
+]
+
+export const updateBulkReferralValidation = [
+  body('list').isArray().notEmpty(),
+]
+
 export const createVisitorValidation = [
   body('inviting_member_display_name').isString().notEmpty(),
   body('visitor_name').isString().isLength({ max: 100 }).notEmpty(),

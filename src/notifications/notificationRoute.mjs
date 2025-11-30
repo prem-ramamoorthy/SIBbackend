@@ -6,7 +6,8 @@ import {
     createbulkNotificationValidation,
     getNotificationByIdValidation,
     updateNotificationValidation,
-    deleteNotificationValidation
+    deleteNotificationValidation,
+    createBulkNotificationwithoutSenderValidation
 } from "./validators.mjs";
 import {
     handleValidationErrors,
@@ -21,7 +22,7 @@ const router = express.Router();
 
 import { body } from "express-validator";
 const assertBodyObjectIds = [
-    body("receiver").custom((v) => mongoose.Types.ObjectId.isValid(v)).withMessage("receiver must be ObjectId"),
+    body("receiver").optional().custom((v) => mongoose.Types.ObjectId.isValid(v)).withMessage("receiver must be ObjectId"),
     body("sender").optional().custom((v) => mongoose.Types.ObjectId.isValid(v)).withMessage("sender must be ObjectId"),
 ];
 
@@ -247,6 +248,45 @@ router.post(
             const notif = new Notification({ receiver, sender, header, content, read, readAt });
             await notif.save();
             res.status(201).json(notif);
+        } catch (err) {
+            res.status(400).json({ error: err.message || "Failed to create notification" });
+        }
+    }
+);
+
+router.post(
+    "/createbulknotificationwithoutsenderbyid",
+    authenticateCookie,
+    createBulkNotificationwithoutSenderValidation,
+    handleValidationErrors,
+    assertBodyObjectIds,
+    handleValidationErrors,
+    async (req, res) => {
+        try {
+            console.log(req.body)
+            const { receiverList, header, content, read = false, readAt = null } = req.body;
+            const user_id = req.user.uid;
+            if (!user_id) {
+                return res.status(400).json({ error: "Missing user id." });
+            }
+
+            const userObj = await User.findOne({ user_id });
+            if (!userObj || !userObj._id) {
+                return res.status(404).json({ error: "User not found with UID" });
+            }
+            const sender = userObj._id;
+
+            const notificationsToInsert = receiverList.map(receiver => ({
+                receiver,
+                sender,
+                header,
+                content,
+                read,
+                readAt
+            }));
+
+            const result = await Notification.insertMany(notificationsToInsert);
+            res.status(201).json({ message: "Notifications created successfully", count: result.length });
         } catch (err) {
             res.status(400).json({ error: err.message || "Failed to create notification" });
         }

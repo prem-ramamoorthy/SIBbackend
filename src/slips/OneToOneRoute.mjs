@@ -4,7 +4,7 @@ import { OneToOneMeeting } from './slipsSchema.mjs';
 import {
   idValidation,
   createOneToOneMeetingValidation,
-  updateOneToOneMeetingValidation
+  updateOneToOneMeetingValidation, updateBulkM2MStatusValidation
 } from './validator.mjs';
 import { mapNamesToIds, authenticateCookie, handleValidationErrors } from '../middlewares.mjs'
 import User from '../../Auth/Schemas.mjs';
@@ -231,23 +231,30 @@ router.put('/updateone2onebyid/:id',
   }
 );
 
-router.put('/updatem2mstatusbyuserid/:userid',
+router.put('/updatebulkm2mstatusbyuserid',
   authenticateCookie,
+  updateBulkM2MStatusValidation,
+  handleValidationErrors,
   async (req, res) => {
     try {
-      const { userid } = req.params;
-      if (!userid) {
-        return res.status(400).json({ error: "Missing userid parameter." });
-      }
+      const { list } = req.body;
+
       const result = await OneToOneMeeting.updateMany(
-        { $or: [{ member1_id: userid }, { member2_id: userid }] },
+        { $or: [{ member1_id: { $in: list } }, { member2_id: { $in: list } }] },
         { $set: { status: true } }
       );
-      if (result.matchedCount === 0 && result.modifiedCount === 0) {
-        return res.status(404).json({ message: 'No one-to-one meetings found for this user.' });
+
+      if (result.matchedCount === 0) {
+        return res.status(404).json({ message: 'No one-to-one meetings found for the provided users.' });
       }
-      res.status(200).json({ message: `Updated ${result.modifiedCount} one-to-one meetings to status=true.` });
+
+      if (result.modifiedCount === 0) {
+        return res.status(200).json({ message: `Found ${result.matchedCount} one-to-one meetings, but no changes were needed (status was already true).` });
+      }
+
+      res.status(200).json({ message: `Successfully updated ${result.modifiedCount} one-to-one meetings to status=true.` });
     } catch (e) {
+      console.error('Error updating bulk one-to-one meeting status:', e);
       res.status(500).json({ error: e.message });
     }
   }

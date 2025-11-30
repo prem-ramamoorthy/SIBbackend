@@ -19,7 +19,7 @@ export const createbulkNotificationValidation = [
 
 export const getNotificationsValidation = [
   query("receiver").optional().isString().withMessage("receiver must be string"),
-  query("read").optional().isIn(["true","false"]).withMessage("read must be boolean string"),
+  query("read").optional().isIn(["true", "false"]).withMessage("read must be boolean string"),
 ];
 
 export const getNotificationByIdValidation = [
@@ -36,4 +36,10 @@ export const updateNotificationValidation = [
 
 export const deleteNotificationValidation = [
   param("id").exists().custom((v) => mongoose.Types.ObjectId.isValid(v)).withMessage("invalid id"),
+];
+
+export const createBulkNotificationwithoutSenderValidation = [
+  body("receiverList").exists().withMessage("receiver required").isArray().withMessage("receiver must be array"),
+  body("header").optional().isString().withMessage("header must be string").isLength({ max: 80 }).withMessage("max 80 chars header"),
+  body("content").exists().withMessage("content required").isString().withMessage("content must be string").isLength({ min: 2, max: 1024 }).withMessage("content must be 2-1024 chars"),
 ];

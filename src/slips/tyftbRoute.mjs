@@ -1,7 +1,7 @@
 import express from 'express';
 import mongoose from 'mongoose';
 import { TYFTB } from './slipsSchema.mjs';
-import { createTyftbValidation, updateTyftbValidation, idValidation } from './validator.mjs';
+import { createTyftbValidation, updateTyftbValidation, idValidation, updateBulkTyftbValidation } from './validator.mjs';
 import { mapNamesToIds, authenticateCookie, handleValidationErrors } from '../middlewares.mjs';
 import User from '../../Auth/Schemas.mjs';
 import { Membership } from '../chapter/ChapterSchema.mjs';
@@ -213,20 +213,19 @@ router.put('/updatetyftbbyid/:id',
     }
 );
 
-router.put('/updatetyftbstatusbypayer/:userid',
+router.put('/updatebulktyftbstatusbypayer',
     authenticateCookie,
+    updateBulkTyftbValidation,
+    handleValidationErrors,
     async (req, res) => {
         try {
-            const { userid } = req.params;
-            if (!userid) {
-                return res.status(400).json({ error: "Missing userid parameter." });
-            }
+            const { list } = req.body;
             const result = await TYFTB.updateMany(
-                { payer_id: userid },
+                { payer_id: { $in: list } },
                 { $set: { status: true } }
             );
             if (result.matchedCount === 0 && result.modifiedCount === 0) {
-                return res.status(200).json({ message: 'No TYFTB records found for this payer.' });
+                return res.status(200).json({ message: 'No TYFTB records found for the provided payers.' });
             }
             res.status(200).json({ message: `Updated ${result.modifiedCount} TYFTB records to status=true.` });
         } catch (e) {

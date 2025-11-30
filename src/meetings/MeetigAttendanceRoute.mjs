@@ -4,7 +4,8 @@ import { Attendance } from './MeetingsSchema.mjs';
 import {
   idValidation,
   createAttendanceValidation,
-  updateAttendanceValidation
+  updateAttendanceValidation,
+  createBulkAttendanceValidation
 } from './validator.mjs';
 import { handleValidationErrors, authenticateCookie, mapNamesToIds } from '../middlewares.mjs';
 import User from '../../Auth/Schemas.mjs';
@@ -32,6 +33,63 @@ router.post(
       const saved = await doc.save();
       res.status(201).json(saved);
     } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  }
+);
+
+router.post(
+  '/createbulkattendances',
+  createBulkAttendanceValidation,
+  handleValidationErrors,
+  authenticateCookie,
+  async (req, res) => {
+    try {
+      const { usersdata, meeting_id, date } = req.body;
+
+      if (!usersdata || !Array.isArray(usersdata) || usersdata.length === 0) {
+        console.log("user data error")
+        return res.status(400).json({ error: 'Valid usersdata array is required.' });
+      }
+      if (!meeting_id) {
+        console.log("meeting id error")
+        return res.status(400).json({ error: 'Valid meeting_id is required.' });
+      }
+      if (!date) {
+        console.log("date error")
+        return res.status(400).json({ error: 'Valid date is required.' });
+      }
+
+      const objectMeetingId = new mongoose.Types.ObjectId(meeting_id);
+      const usernames = usersdata.map(data => data.name);
+
+      const users = await User.find({ username: { $in: usernames } }).select('_id username');
+
+      if (users.length !== usernames.length) {
+        const foundUsernames = new Set(users.map(u => u.username));
+        const missingUsernames = usernames.filter(name => !foundUsernames.has(name));
+        console.log(missingUsernames)
+        return res.status(400).json({
+          error: `Some users not found: ${missingUsernames.join(', ')}`
+        });
+      }
+
+      const usernameToIdMap = new Map(users.map(user => [user.username, user._id]));
+
+      const attendanceDocuments = usersdata.map(data => {
+        const userId = usernameToIdMap.get(data.name);
+        return {
+          user_id: userId,
+          attendance_status: data.attendance.toLowerCase(),
+          meeting_id: objectMeetingId,
+          date: new Date(date)
+        };
+      });
+
+      const savedAttendances = await Attendance.insertMany(attendanceDocuments);
+      res.status(201).json({ message: 'Attendances created successfully', savedAttendances });
+    } catch (err) {
+      console.log(err)
       res.status(500).json({ error: err.message });
     }
   }
@@ -296,7 +354,7 @@ router.get('/getattendanceofmine', authenticateCookie, async (req, res) => {
       return res.status(404).json({ error: "User not found." });
     }
 
-    let targetUserObj  = userObj._id;
+    let targetUserObj = userObj._id;
 
     if (!chapterUserIds.includes(targetUserObj._id.toString())) {
       return res.status(403).json({ error: 'User not in the same chapter.' });
@@ -329,7 +387,7 @@ router.get('/getattendanceofmine', authenticateCookie, async (req, res) => {
           attendance_status: 1,
           date: 1,
           user: { _id: 1, username: 1, email: 1, phone_number: 1 },
-          meeting: { _id: 1, meeting_date: 1, title: 1, location: 1 , meeting_type : 1 , duration : 1}
+          meeting: { _id: 1, meeting_date: 1, title: 1, location: 1, meeting_type: 1, duration: 1 }
         }
       }
     ]);
