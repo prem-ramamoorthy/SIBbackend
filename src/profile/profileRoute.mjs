@@ -133,8 +133,22 @@ router.get('/getallprofiles', authenticateCookie, async (req, res) => {
       matchStage.vertical_names = { $regex: `^${vertical}$`, $options: 'i' };
     }
 
-    if (myChapterOnly === "true" && req.user?.chapter_id) {
-      matchStage.chapter_id = new mongoose.Types.ObjectId(req.user.chapter_id);
+    if (myChapterOnly === "true") {
+      const user_id = req.user.uid;
+      if (!user_id) {
+        return res.status(400).json({ error: "Missing user id." });
+      }
+
+      const userObj = await User.findOne({ user_id });
+      if (!userObj || !userObj._id) {
+        return res.status(404).json({ error: "User not found with UID" });
+      }
+
+      const membership = await Membership.findOne({ user_id: userObj._id });
+      if (!membership || !membership.chapter_id) {
+        return res.status(404).json({ error: "Membership or chapter not found." });
+      }
+      matchStage.chapter_id = new mongoose.Types.ObjectId(membership.chapter_id);
     }
 
     if (Object.keys(matchStage).length > 0) {
@@ -228,9 +242,9 @@ router.get('/getallprofiles', authenticateCookie, async (req, res) => {
       },
       {
         $addFields: {
-          chapter: { $ifNull: [ { $arrayElemAt: [ "$chapter.chapter_name", 0 ] }, null ] },
-          region: { $ifNull: [ { $arrayElemAt: [ "$region.region_name", 0 ] }, null ] },
-          verticals: { $ifNull: [ { $arrayElemAt: [ "$verticals.vertical_name", 0 ] }, null ] },
+          chapter: { $ifNull: [{ $arrayElemAt: ["$chapter.chapter_name", 0] }, null] },
+          region: { $ifNull: [{ $arrayElemAt: ["$region.region_name", 0] }, null] },
+          verticals: { $ifNull: [{ $arrayElemAt: ["$verticals.vertical_name", 0] }, null] },
           user: {
             $cond: {
               if: { $isArray: ["$user"] },
