@@ -355,6 +355,29 @@ router.post('/searchuser',
 	}
 );
 
+router.post('/searchalluser',
+	authenticateCookie,
+	searchUserValidator,
+	handleValidationErrors,
+	async (req, res) => {
+		try {
+			const { substr } = req.body;
+			const matchedUsers = await User.find({
+				username: { $regex: substr.trim(), $options: "i" }
+			})
+				.select("username")
+				.limit(10);
+
+			return res.status(200).json({
+				results: matchedUsers.map(u => u.username)
+			});
+		} catch (error) {
+			console.error("SearchUser Error:", error);
+			return res.status(500).json({ error: "Internal Server Error." });
+		}
+	}
+);
+
 router.post('/searchchapter',
 	authenticateCookie,
 	searchUserValidator,
