@@ -1,20 +1,38 @@
-import admin from "../Auth/firebase.mjs";
+import admin from "./pages/Auth/firebase.mjs";
 import mongoose from 'mongoose';
 import { validationResult } from 'express-validator';
-import { Vertical } from '../src/Admin/AdminSchemas.mjs';
-import User from "../Auth/Schemas.mjs";
-import { Chapter } from "./chapter/ChapterSchema.mjs";
-import { MemberProfile } from "./profile/ProfileSchema.mjs";
-import { Referral } from "./slips/slipsSchema.mjs";
+import { Chapter, Membership, Referral, MemberProfile, User, Vertical } from "./schemas.mjs";
 
 export const authenticateCookie = async (req, res, next) => {
   const sessionCookie = req.cookies.session || "";
   try {
     const decodedClaims = await admin.auth().verifySessionCookie(sessionCookie, true);
     req.user = decodedClaims;
+    req.uid = decodedClaims.uid;
+    if (!req.uid) {
+      return res.status(400).json({ error: "Missing user id." });
+    }
+
+    const userObj = await User.findOne({ user_id: req.uid }).select('_id');
+    if (!userObj) {
+      return res.status(404).json({ error: "User not found with UID" });
+    }
+    req.userid = userObj._id;
+
+    const membership = await Membership.findOne({ user_id: userObj._id }).select('_id chapter_id');
+    if (!membership || !membership.chapter_id) {
+      return res.status(404).json({ error: "Membership or chapter not found." });
+    }
+    req.memberid = membership._id;
+
+    const chapter = await Chapter.findById(membership.chapter_id);
+    if (!chapter) {
+      return res.status(404).json({ error: "Chapter not found." });
+    }
+    req.chapter = chapter;
     next();
   } catch (err) {
-    return res.status(401).json({ message: "Unauthorized", error: err });
+    res.status(401).json({ message: "Unauthorized", error: err.message || err });
   }
 };
 
@@ -187,39 +205,40 @@ export const mapverticalIds = async (req, res, next) => {
   try {
     const { vertical_ids } = req.body;
 
-    if (!vertical_ids || !Array.isArray(vertical_ids) || vertical_ids.length === 0) {
+    if (!vertical_ids?.length || !Array.isArray(vertical_ids)) {
       return next();
     }
 
-    const mappedVerticalIds = [];
+    const objectIds = [];
+    const namesToLookup = [];
 
     for (const item of vertical_ids) {
       if (mongoose.Types.ObjectId.isValid(item)) {
-        mappedVerticalIds.push(new mongoose.Types.ObjectId(item));
-        continue;
+        objectIds.push(new mongoose.Types.ObjectId.createFromHexString(item));
+      } else if (typeof item === 'string' && item.trim()) {
+        namesToLookup.push(item.trim());
       }
-
-      const verticalDoc = await Vertical.findOne({ vertical_name: item.trim() }).select('_id');
-
-      if (!verticalDoc) {
-        if (item && typeof item === 'object' && typeof item.vertical_name === 'string' && item.vertical_name.trim()) {
-          mappedVerticalIds.push(item.vertical_name.trim());
-          continue;
-        }
-
-        return res.status(400).json({
-          error: `Vertical '${item}' not found. Please provide a valid vertical name or ID.`
-        });
-      }
-
-      mappedVerticalIds.push(verticalDoc._id);
     }
 
-    req.body.vertical_ids = mappedVerticalIds;
+    if (namesToLookup.length > 0) {
+      const verticals = await Vertical.find({ vertical_name: { $in: namesToLookup } }).select('_id vertical_name');
+      const verticalMap = new Map(verticals.map(v => [v.vertical_name, v._id]));
 
+      for (const name of namesToLookup) {
+        const id = verticalMap.get(name);
+        if (!id) {
+          return res.status(400).json({
+            error: `Vertical '${name}' not found. Please provide a valid vertical name or ID.`
+          });
+        }
+        objectIds.push(id);
+      }
+    }
+
+    req.body.vertical_ids = objectIds;
     next();
   } catch (err) {
-    console.error('Error in mapNamesToIds:', err);
+    console.error('Error in mapverticalIds:', err);
     res.status(500).json({ error: `Server error while mapping vertical names to IDs ${err.message}` });
   }
 };

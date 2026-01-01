@@ -16,10 +16,10 @@
   "license": "ISC",
   "author": "Prem kumar Ramamoorthy",
   "type": "commonjs",
-  "main": "app.mjs",
+  "main": "./src/app.mjs",
   "scripts": {
-    "start": "node app.mjs",
-    "dev": "nodemon app.mjs",
+    "start": "node ./src/app.mjs",
+    "dev": "nodemon ./src/app.mjs",
     "test": "echo \"No tests\" && exit 0"
   },
   "devDependencies": {
