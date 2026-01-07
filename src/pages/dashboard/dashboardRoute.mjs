@@ -1,7 +1,7 @@
 import express from 'express';
 import { handleValidationErrors } from '../../middlewares.mjs';
 import { formatDate } from '../../utils/dateformatter.mjs';
-import { Referral, TYFTB, OneToOneMeeting, Visitor, Event, Meeting, User, Chapter, Membership, ChapterSummary } from '../../schemas.mjs';
+import { Referral, TYFTB, OneToOneMeeting, Visitor, Event, Meeting, User, Chapter, Membership, ChapterSummary , MemberProfile} from '../../schemas.mjs';
 import { searchUserValidator } from '../../validators.mjs';
 
 const router = express.Router();
@@ -254,9 +254,24 @@ router.post('/searchuser', searchUserValidator, handleValidationErrors, async (r
 		})
 			.select("username")
 			.limit(10);
+		let userdata = null;
+		if (matchedUsers.length === 1) {
+			userdata = await User.findOne({ _id: matchedUsers[0]._id }).select("username email phone_number");
+		}
+
+		const memberProfiles = await MemberProfile.find({
+			user_id: { $in: matchedUsers.map(u => u._id) }
+		}).select("user_id display_name");
+
+		const displayNameMap = {};
+		memberProfiles.forEach(profile => {
+			displayNameMap[profile.user_id.toString()] = profile.display_name;
+		});
 
 		return res.status(200).json({
-			results: matchedUsers.map(u => u.username)
+			results: matchedUsers.map(u => u.username),
+			names: matchedUsers.map(u => displayNameMap[u._id.toString()] || ""),
+			userdata: userdata
 		});
 	} catch (error) {
 		console.error("SearchUser Error:", error);
@@ -390,7 +405,7 @@ router.get('/getactivity/:timeline', async (req, res) => {
 router.get('/getactivityupcoming/:timeline', async (req, res) => {
 	const timeline = String(req.params.timeline || 'full').toLowerCase(); // "full" | "6months" | "amonth"
 	try {
-		
+
 		const now = new Date();
 		let startDate = null;
 		let endDate = now;
