@@ -7,7 +7,7 @@ import authRoutes from "./pages/Auth/routes.mjs";
 import path from "path";
 import { fileURLToPath } from "url";
 import connectDB from "./utils/mongo_connection.mjs";
-import AdminRouter from './pages/Admin/AdminRoute.mjs'
+import AdminRouter from './pages/admin/AdminRoute.mjs'
 import ChapterRouter from "./pages/chapter/MainRoute.mjs";
 import ProfileRouter from "./pages/profile/profileRoute.mjs";
 import MeetingRouter from "./pages/meetings/meetingRoute.mjs";
