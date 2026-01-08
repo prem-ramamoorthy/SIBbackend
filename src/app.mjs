@@ -19,7 +19,7 @@ import NotificationRouter from './pages/notifications/notificationRoute.mjs'
 import ActivityRouter from './pages/activity/activityRoute.mjs'
 import { authenticateCookie } from "./middlewares.mjs";
 
-connectDB() ;
+connectDB();
 
 dotenv.config();
 
@@ -38,6 +38,36 @@ const allowedOrigins = [
   "capacitor://localhost",
   "http://localhost:5173"               // official Capacitor app origin
 ];
+
+app.get("/favicon.ico", (req, res) => {
+  res.status(204).end();
+});
+
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      if (!origin) return callback(null, true);
+      if (allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        console.log("❌ Blocked by CORS:", origin);
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
+    credentials: true,
+  })
+);
+
+app.get("/", (req, res) => {
+  res.status(200).sendFile(path.join(__dirname, "index.html"));
+});
+app.use("/auth", authRoutes);
+
+app.get("/favicon.ico", (req, res) => {
+  res.status(204).end();
+});
+
+app.use(authenticateCookie);
 
 app.use(
   cors({
@@ -61,15 +91,15 @@ app.use("/auth", authRoutes);
 app.use(authenticateCookie);
 
 app.use('/admin', AdminRouter);
-app.use('/chapter' , ChapterRouter)
+app.use('/chapter', ChapterRouter)
 app.use('/profile', ProfileRouter)
 app.use('/meeting', MeetingRouter)
-app.use('/slips',slipsRouter)
-app.use('/member' , MemberRouter)
+app.use('/slips', slipsRouter)
+app.use('/member', MemberRouter)
 app.use('/event', EventRouter)
 app.use('/dashboard', DashboardRouter)
 app.use('/notification', NotificationRouter)
-app.use('/activity' , ActivityRouter)
+app.use('/activity', ActivityRouter)
 
 
 const PORT = process.env.PORT || 4000;
