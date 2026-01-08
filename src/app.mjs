@@ -53,6 +53,9 @@ app.use(
     credentials: true,
   })
 );
+app.get("/", (req, res) => {
+  res.status(200).sendFile(path.join(__dirname, "index.html"));
+});
 app.use("/auth", authRoutes);
 
 app.use(authenticateCookie);
@@ -68,9 +71,6 @@ app.use('/dashboard', DashboardRouter)
 app.use('/notification', NotificationRouter)
 app.use('/activity' , ActivityRouter)
 
-app.get("/", (req, res) => {
-  res.status(200).sendFile(path.join(__dirname, "index.html"));
-});
 
 const PORT = process.env.PORT || 4000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
