@@ -1008,3 +1008,29 @@ const tyftbSchema = new Schema({
 tyftbSchema.index({ payer_id: 1, receiver_id: 1, date_closed: -1 });
 
 export const TYFTB = mongoose.model('tyftb', tyftbSchema);
+
+const gallerySchema = new Schema({
+    title: {
+        type: String,
+        required: true,
+        maxlength: 255,
+        trim: true
+    },
+    date: {
+        type: Date,
+        required: true
+    },
+    coverImg: {
+        type: String,
+        trim: true
+    },
+    photos: {
+        type: [String],
+        default: []
+    }
+}, {
+    timestamps: true,
+    collection: 'galleries'
+});
+
+export const Gallery = mongoose.model('galleries', gallerySchema);

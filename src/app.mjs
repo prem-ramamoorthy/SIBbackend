@@ -21,6 +21,7 @@ import DashboardRouter from "./pages/dashboard/dashboardRoute.mjs";
 import NotificationRouter from "./pages/notifications/notificationRoute.mjs";
 import ActivityRouter from "./pages/activity/activityRoute.mjs";
 import Public from "./pages/public/public.mjs";
+import Galery from "./pages/galery/galeryRoute.mjs";
 
 dotenv.config();
 
@@ -64,6 +65,7 @@ app.get("/", (_req, res) => {
 
 app.use("/public", Public);
 app.use("/auth", authRoutes);
+app.use("/gallery", Galery);
 
 app.use(authenticateCookie);
 
