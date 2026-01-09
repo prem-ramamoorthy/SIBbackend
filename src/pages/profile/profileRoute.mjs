@@ -39,7 +39,7 @@ router.post(
 
 router.get('/getallprofiles', async (req, res) => {
   try {
-    const { region, chapter, vertical, sort, myChapterOnly } = req.query;
+    const { region, chapter, vertical, sort, search, myChapterOnly } = req.query;
 
     const pipeline = [];
 
@@ -107,7 +107,7 @@ router.get('/getallprofiles', async (req, res) => {
     }
 
     if (myChapterOnly === "true") {
-      const user_id = req.user.uid;
+      const user_id = req.user?.uid;
       if (!user_id) {
         return res.status(400).json({ error: "Missing user id." });
       }
@@ -122,6 +122,20 @@ router.get('/getallprofiles', async (req, res) => {
         return res.status(404).json({ error: "Membership or chapter not found." });
       }
       matchStage.chapter_id = new mongoose.Types.ObjectId(membership.chapter_id);
+    }
+
+    if (search && search.trim() !== "") {
+      const searchRegex = { $regex: search.trim(), $options: 'i' };
+      matchStage.$or = [
+        { display_name: searchRegex },
+        { username: searchRegex },
+        { company_name: searchRegex },
+        { company_email: searchRegex },
+        { native_place: searchRegex },
+        { chapter_name: searchRegex },
+        { region_name: searchRegex },
+        { vertical_names: searchRegex }
+      ];
     }
 
     if (Object.keys(matchStage).length > 0) {
