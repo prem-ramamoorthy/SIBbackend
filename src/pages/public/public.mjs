@@ -1,5 +1,5 @@
 import express from 'express';
-import { MemberProfile , Vertical, Chapter , Region } from '../../schemas.mjs';
+import { MemberProfile, Vertical, Chapter, Region, Referral, Membership, TYFTB } from '../../schemas.mjs';
 
 const Public = express.Router();
 
@@ -163,6 +163,35 @@ Public.get('/getallregions', async (req, res) => {
     const regions = await Region.find().sort({ created_at: -1 }).select('region_name');
     const regionNames = regions.map(r => r.region_name);
     res.status(200).json(regionNames);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+Public.get('/stats', async (req, res) => {
+  try {
+    const verticalcount = await Vertical.countDocuments();
+    const referralcount = await Referral.countDocuments();
+    const membershipcount = await Membership.countDocuments();
+    const chaptercount = await Chapter.countDocuments();
+    const results = await TYFTB.aggregate(
+      [
+        {
+          $match: {
+            status: true
+          }
+        },
+        {
+          $group: {
+            _id: null,
+            totalBusinessAmount: {
+              $sum: '$business_amount'
+            }
+          }
+        }
+      ]);
+    const totalRevenue = parseInt(results[0]?.totalBusinessAmount ?? 0, 10);
+    res.status(200).json({ verticalcount, referralcount, membershipcount, chaptercount, bussinessamount: totalRevenue });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
