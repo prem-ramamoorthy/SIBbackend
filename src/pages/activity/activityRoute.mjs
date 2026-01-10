@@ -412,7 +412,8 @@ router.get('/getactivity-details', async (req, res) => {
                         } : { _id: null, name: 'Unknown', email: '' },
                         createdAt: item.createdAt,
                         direction: member1Id === userIdStr ? 'given' : 'received',
-                        type: 'm2m'
+                        type: 'm2m',
+                        image_url: item.image_url
                     });
                 }
             });

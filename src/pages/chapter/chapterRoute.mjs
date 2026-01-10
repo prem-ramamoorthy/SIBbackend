@@ -3,6 +3,7 @@ import mongoose from 'mongoose';
 import { createChapterValidation, updateChapterValidation, idValidation } from '../../validators.mjs';
 import { handleValidationErrors } from '../../middlewares.mjs';
 import { Region, Chapter } from '../../schemas.mjs';
+import fetch from 'node-fetch';
 
 const router = express.Router();
 
@@ -19,6 +20,22 @@ router.post('/createchapter', createChapterValidation, handleValidationErrors,
       delete req.body.region_name;
       const chapter = new Chapter(req.body);
       const saved = await chapter.save();
+
+      const galleryPayload = {
+        title: `${saved.chapter_name} M2M gallery`,
+        date: saved.founded_date || new Date(),
+        coverImg: "",
+        photos: []
+      };
+
+      fetch('https://api.senguntharinbusiness.in/gallery/upload', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(galleryPayload)
+      }).catch(err => {
+        console.error('Failed to create gallery:', err.message);
+      });
+
       res.status(201).json(saved);
     } catch (err) {
       res.status(500).json({ error: err.message });

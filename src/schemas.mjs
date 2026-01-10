@@ -781,6 +781,12 @@ const oneToOneMeetingSchema = new Schema({
     status: {
         type: Boolean,
         required: true
+    },
+    image_url : {
+        type: String,
+        trim: true,
+        reqired : true ,
+        default : ''
     }
 },
     {
