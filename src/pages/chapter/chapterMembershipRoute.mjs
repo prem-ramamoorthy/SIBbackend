@@ -77,7 +77,6 @@ router.post(
   }
 );
 
-
 router.get('/getallmemberships', async (req, res) => {
   try {
     const docs = await Membership.aggregate([
