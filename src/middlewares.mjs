@@ -93,7 +93,6 @@ export async function mapNamesToIds(req, res, next) {
         });
       }
       req.body.chapter_id = chapter._id;
-      delete req.body.chapter_name;
     }
     if (typeof req.body.member1_name === 'string' && req.body.member1_name.trim()) {
       const member1 = await MemberProfile.findOne({ display_name: req.body.member1_name }).select('_id');

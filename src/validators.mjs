@@ -607,6 +607,7 @@ export const createOneToOneMeetingValidation = [
     body('discussion_points').optional().isString(),
     body('created_by_username').isString().notEmpty(),
     body('status').isBoolean().notEmpty(),
+    body('image_url').isString().notEmpty(),
 ];
 
 export const updateOneToOneMeetingValidation = [
@@ -619,6 +620,7 @@ export const updateOneToOneMeetingValidation = [
     body('discussion_points').optional().isString(),
     body('created_by_username').optional().isString(),
     body('status').isBoolean().optional(),
+    body('image_url').isString().optional(),
 ];
 
 export const createReferralValidation = [

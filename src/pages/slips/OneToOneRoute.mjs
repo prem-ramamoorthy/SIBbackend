@@ -1,14 +1,14 @@
 import express from 'express';
 import mongoose from 'mongoose';
-import { OneToOneMeeting, Membership, User } from '../../schemas.mjs';
+import { OneToOneMeeting, Membership, Gallery } from '../../schemas.mjs';
 import { idValidation, createOneToOneMeetingValidation, updateOneToOneMeetingValidation, updateBulkM2MStatusValidation } from '../../validators.mjs';
 import { mapNamesToIds, handleValidationErrors } from '../../middlewares.mjs'
+import fetch from 'node-fetch';
 
 const router = express.Router();
 
 router.post(
   '/createone2one',
-
   createOneToOneMeetingValidation,
   handleValidationErrors,
   mapNamesToIds,
@@ -17,12 +17,30 @@ router.post(
 
       req.body.member1_id = req.userid;
 
-      if (!req.body.member1_id || !req.body.member2_id || !req.body.chapter_id || !req.body.created_by)
+      if (!req.body.member1_id || !req.body.member2_id || !req.body.chapter_id || !req.body.created_by) {
         return res.status(400).json({ message: 'All member, chapter, and user references are required and must be valid.' });
+      }
+
+      let gallery = await Gallery.findOne({ chapter_id: req.body.chapter_id }).select('_id').lean();
+      if (req.body.chapter_name) {
+        gallery = await Gallery.findOne({ title: `${req.body.chapter_name} M2M gallery` }).select('_id').lean();
+      }
+
+      if (req.body.image_url) {
+        fetch(`https://api.senguntharinbusiness.in/gallery/add-photos/${gallery._id}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ photos: [req.body.image_url] })
+        }).catch(err => {
+          console.error('Failed to add photo to gallery:', err.message);
+        });
+      }
+
       const meeting = new OneToOneMeeting(req.body);
       const saved = await meeting.save();
-      res.status(201).json("One-to-One Meeting created successfully with ID: " + saved._id);
+      res.status(201).json({ message: "One-to-One Meeting created successfully", id: saved._id });
     } catch (err) {
+      console.error(err);
       res.status(500).json({ error: err.message });
     }
   }
@@ -30,7 +48,7 @@ router.post(
 
 router.get('/getone2ones', async (req, res) => {
   try {
-    
+
     const userId = req.userid;
 
     const chapterMemberships = await Membership.find({
@@ -46,7 +64,7 @@ router.get('/getone2ones', async (req, res) => {
     const docs = await OneToOneMeeting.aggregate([
       {
         $match: {
-          chapter_id:req.chapter._id,
+          chapter_id: req.chapter._id,
           $or: [
             { member1_id: { $in: chapterUserIds } },
             { member2_id: { $in: chapterUserIds } }
@@ -113,6 +131,7 @@ router.get('/getone2ones', async (req, res) => {
             username: 1,
             email: 1
           },
+          image_url: 1,
           status: 1,
           meeting_date: 1,
           location: 1,
@@ -136,22 +155,62 @@ router.get('/getone2onebyid/:id', idValidation, handleValidationErrors, async (r
       { $match: { _id: new mongoose.Types.ObjectId(req.params.id) } },
       {
         $lookup: {
-          from: 'profiles',
-          localField: 'member1_id',
-          foreignField: '_id',
-          as: 'member1'
+          from: 'users',
+          let: { member1_id: '$member1_id', member2_id: '$member2_id', created_by: '$created_by' },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $or: [
+                    { $eq: ['$_id', '$$member1_id'] },
+                    { $eq: ['$_id', '$$member2_id'] },
+                    { $eq: ['$_id', '$$created_by'] }
+                  ]
+                }
+              }
+            },
+            { $project: { _id: 1, username: 1, email: 1 } }
+          ],
+          as: 'users'
         }
       },
-      { $unwind: { path: '$member1', preserveNullAndEmptyArrays: true } },
       {
-        $lookup: {
-          from: 'profiles',
-          localField: 'member2_id',
-          foreignField: '_id',
-          as: 'member2'
+        $addFields: {
+          member1: {
+            $arrayElemAt: [
+              {
+                $filter: {
+                  input: '$users',
+                  as: 'u',
+                  cond: { $eq: ['$$u._id', '$member1_id'] }
+                }
+              }, 0
+            ]
+          },
+          member2: {
+            $arrayElemAt: [
+              {
+                $filter: {
+                  input: '$users',
+                  as: 'u',
+                  cond: { $eq: ['$$u._id', '$member2_id'] }
+                }
+              }, 0
+            ]
+          },
+          created_by_user: {
+            $arrayElemAt: [
+              {
+                $filter: {
+                  input: '$users',
+                  as: 'u',
+                  cond: { $eq: ['$$u._id', '$created_by'] }
+                }
+              }, 0
+            ]
+          }
         }
       },
-      { $unwind: { path: '$member2', preserveNullAndEmptyArrays: true } },
       {
         $lookup: {
           from: 'chapters',
@@ -162,14 +221,25 @@ router.get('/getone2onebyid/:id', idValidation, handleValidationErrors, async (r
       },
       { $unwind: { path: '$chapter', preserveNullAndEmptyArrays: true } },
       {
-        $lookup: {
-          from: 'users',
-          localField: 'created_by',
-          foreignField: '_id',
-          as: 'created_by_user'
+        $project: {
+          _id: 1,
+          member1: 1,
+          member2: 1,
+          chapter: {
+            _id: 1,
+            chapter_name: 1,
+            chapter_code: 1
+          },
+          created_by_user: 1,
+          image_url: 1,
+          status: 1,
+          meeting_date: 1,
+          location: 1,
+          discussion_points: 1,
+          createdAt: 1,
+          updatedAt: 1
         }
-      },
-      { $unwind: { path: '$created_by_user', preserveNullAndEmptyArrays: true } }
+      }
     ]);
     if (!doc) return res.status(404).json({ message: 'Meeting not found' });
     res.status(200).json(doc);
