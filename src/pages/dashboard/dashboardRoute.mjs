@@ -1,7 +1,7 @@
 import express from 'express';
 import { handleValidationErrors } from '../../middlewares.mjs';
 import { formatDate } from '../../utils/dateformatter.mjs';
-import { Referral, TYFTB, OneToOneMeeting, Visitor, Event, Meeting, User, Chapter, Membership, ChapterSummary , MemberProfile} from '../../schemas.mjs';
+import { Referral, TYFTB, OneToOneMeeting, Visitor, Event, Meeting, User, Chapter, Membership, ChapterSummary, MemberProfile } from '../../schemas.mjs';
 import { searchUserValidator } from '../../validators.mjs';
 
 const router = express.Router();
@@ -283,14 +283,41 @@ router.post('/searchuser', searchUserValidator, handleValidationErrors, async (r
 router.post('/searchalluser', searchUserValidator, handleValidationErrors, async (req, res) => {
 	try {
 		const { substr } = req.body;
+
+		const sameChapterMemberships = await Membership.find({
+			membership_status: true
+		}).distinct("user_id");
+
 		const matchedUsers = await User.find({
+			_id: { $in: sameChapterMemberships, $ne: req.userid },
 			username: { $regex: substr.trim(), $options: "i" }
 		})
 			.select("username")
 			.limit(10);
+		let userdata = null;
+		if (matchedUsers.length === 1) {
+			userdata = await User.findOne({ _id: matchedUsers[0]._id }).select("username email phone_number");
+		}
+
+		const memberProfiles = await MemberProfile.find({
+			user_id: { $in: matchedUsers.map(u => u._id) }
+		}).populate("chapter_id", "chapter_name").select("user_id display_name");
+
+		const displayNameMap = {};
+		memberProfiles.forEach(profile => {
+			displayNameMap[profile.user_id.toString()] = profile.display_name;
+		});
+
+		const chapterNameMap = {};
+		memberProfiles.forEach(profile => {
+			chapterNameMap[profile.user_id.toString()] = profile.chapter_id && profile.chapter_id.chapter_name ? profile.chapter_id.chapter_name : "";
+		});
 
 		return res.status(200).json({
-			results: matchedUsers.map(u => u.username)
+			results: matchedUsers.map(u => u.username),
+			names: matchedUsers.map(u => displayNameMap[u._id.toString()] || ""),
+			userdata: userdata,
+			chapters: matchedUsers.map(u => chapterNameMap[u._id.toString()] || "")
 		});
 	} catch (error) {
 		console.error("SearchUser Error:", error);
