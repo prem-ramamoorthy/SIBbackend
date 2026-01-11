@@ -171,28 +171,60 @@ Public.get('/getallregions', async (req, res) => {
 
 Public.get('/stats', async (req, res) => {
   try {
-    const verticalcount = await Vertical.countDocuments();
-    const referralcount = await Referral.countDocuments();
-    const membershipcount = await Membership.countDocuments();
-    const chaptercount = await Chapter.countDocuments();
-    const results = await TYFTB.aggregate(
-      [
-        {
-          $match: {
-            status: true
-          }
-        },
-        {
-          $group: {
-            _id: null,
-            totalBusinessAmount: {
-              $sum: '$business_amount'
-            }
+    const { time } = req.query; // all, year, month, week
+    let dateFilter = {};
+    if (time && time !== 'all') {
+      const now = new Date();
+      let fromDate;
+      if (time === 'year') {
+      fromDate = new Date(now);
+      fromDate.setFullYear(now.getFullYear() - 1);
+      } else if (time === 'month') {
+      fromDate = new Date(now);
+      fromDate.setDate(now.getDate() - 30);
+      } else if (time === 'week') {
+      fromDate = new Date(now);
+      fromDate.setDate(now.getDate() - 7);
+      }
+      if (fromDate) {
+      dateFilter = { createdAt: { $gte: fromDate } };
+      }
+    }
+
+    const verticalcount = await Vertical.countDocuments(dateFilter);
+    const referralcount = await Referral.countDocuments(dateFilter);
+    const membershipcount = await Membership.countDocuments(dateFilter);
+    const chaptercount = await Chapter.countDocuments(dateFilter);
+    const regioncount = await Region.countDocuments(dateFilter);
+
+
+    const results = await TYFTB.aggregate([
+      {
+        $match: {
+          status: true,
+          ...dateFilter
+        }
+      },
+      {
+        $group: {
+          _id: null,
+          totalBusinessAmount: {
+            $sum: '$business_amount'
           }
         }
-      ]);
+      }
+    ]);
+
     const totalRevenue = parseInt(results[0]?.totalBusinessAmount ?? 0, 10);
-    res.status(200).json({ verticalcount, referralcount, membershipcount, chaptercount, bussinessamount: totalRevenue });
+
+    res.status(200).json({
+      verticalcount,
+      referralcount,
+      membershipcount,
+      chaptercount,
+      bussinessamount: totalRevenue,
+      regioncount
+    });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
