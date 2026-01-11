@@ -528,6 +528,21 @@ router.get('/caneditevents', async (req, res) => {
 	}
 });
 
+router.get('/isadmin', async (req, res) => {
+	try {
+		const admins = process.env.ADMIN_UIDS ? process.env.ADMIN_UIDS.split(",") : [];
+		if (admins.includes(req.uid)) {
+			res.status(200).json({ hasaccess: true });
+		}
+		else {
+			res.status(200).json({ hasaccess: false });
+		}
+	} catch (err) {
+		console.error('Error fetching event access key', err);
+		return res.status(500).json({ error: "Internal server error." });
+	}
+});
+
 router.get('/coordinatoraccess', async (req, res) => {
 	try {
 		const firebaseUid = req.user && req.user.uid;

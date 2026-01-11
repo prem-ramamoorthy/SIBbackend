@@ -70,7 +70,9 @@ app.use("/gallery", Galery);
 app.use(authenticateCookie);
 
 app.get("/authenticate", (req, res) => {
-  res.status(200).json({ message: "Authenticated", user: req.user });
+  const admins = process.env.ADMIN_UIDS ? process.env.ADMIN_UIDS.split(",") : [];
+  const isAdmin = admins.includes(req.uid);
+  res.status(200).json({ message: "Authenticated", user: req.user, isAdmin});
 });
 
 app.use("/admin", AdminRouter);

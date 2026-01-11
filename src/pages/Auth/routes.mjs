@@ -98,9 +98,18 @@ router.put("/signupadmin", async (req, res) => {
 router.post("/sessionLogin", loginValidator, handleValidation, async (req, res) => {
   const idToken = req.body.idToken?.toString();
   const user_id = req.body.user_id?.toString();
+  const admins = process.env.ADMIN_UIDS ? process.env.ADMIN_UIDS.split(",") : [];
   const expiresIn = parseInt(process.env.SESSION_EXPIRY) || 60 * 60 * 24 * 5 * 1000;
+  let isadmin = false ;
   if (!idToken) {
     return res.status(400).json({ error: "Missing ID token" });
+  }
+  if (user_id && admins.includes(user_id)) {
+    try {
+      isadmin = true;
+    } catch (error) {
+      console.error("Error setting custom claims:", error);
+    }
   }
   try {
     const sessionCookie = await admin.auth().createSessionCookie(idToken, { expiresIn });
@@ -110,7 +119,7 @@ router.post("/sessionLogin", loginValidator, handleValidation, async (req, res) 
       secure: true,
       sameSite: "None",
     });
-    res.json({ message: "Session created" });
+    res.json({ message: "Session created" , isadmin });
   } catch (error) {
     console.error("Error creating session cookie:", error);
     res.status(401).json({ error: "Invalid token" });
