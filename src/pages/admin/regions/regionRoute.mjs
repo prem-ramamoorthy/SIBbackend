@@ -28,9 +28,8 @@ router.post(
 
 router.get('/getallregions', async (req, res) => {
   try {
-    const regions = await Region.find().sort({ created_at: -1 }).select('region_name');
-    const regionNames = regions.map(r => r.region_name);
-    res.status(200).json(regionNames);
+    const regions = await Region.find().sort({ created_at: -1 });
+    res.status(200).json(regions);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
