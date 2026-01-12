@@ -1,0 +1,371 @@
+{
+  "public_routes": {
+    "root": {
+      "GET": ["/"]
+    },
+    "public": {
+      "GET": [
+        "/getallprofiles",
+        "/getallverticals",
+        "/getallchapternames",
+        "/getallregions",
+        "/stats",
+        "/getprofilebyid/:id",
+        "/showprofile"
+      ]
+    },
+    "auth": {
+      "POST": [
+        "/signup",
+        "/sessionLogin",
+        "/sessionLogout",
+        "/upload/photo",
+        "/updatePassword",
+        "/resetPassword"
+      ],
+      "PUT": [
+        "/signupadmin"
+      ]
+    },
+    "gallery": {
+      "GET": [
+        "/all"
+      ],
+      "POST": [
+        "/upload",
+        "/add-photos/:id"
+      ],
+      "DELETE": [
+        "/:id",
+        "/delete/:id",
+        "/delete-photo/:id"
+      ]
+    }
+  },
+  "authenticated_routes": {
+    "auth": {
+      "GET": [
+        "/getuser",
+        "/profile"
+      ],
+      "POST": [
+        "/refreshSession"
+      ],
+      "PUT": [
+        "/updateProfile"
+      ],
+      "DELETE": [
+        "/deleteAccount"
+      ]
+    },
+    "authenticate": {
+      "GET": ["/authenticate"]
+    },
+    "admin": {
+      "GET": [
+        "/chapter-performance",
+        "/chapter-performance/:id",
+        "/stats",
+        "/chapter-revenue"
+      ],
+      "DELETE": [
+        "/user"
+      ],
+      "region": {
+        "GET": [
+          "/getallregions",
+          "/getregionbyid/:id"
+        ],
+        "POST": [
+          "/createregion"
+        ],
+        "PUT": [
+          "/updateregionbyid/:id"
+        ],
+        "DELETE": [
+          "/deleteregionbyid/:id"
+        ]
+      },
+      "vertical": {
+        "GET": [
+          "/getallverticals",
+          "/getverticalbyid/:id"
+        ],
+        "POST": [
+          "/createvertical"
+        ],
+        "PUT": [
+          "/updateverticalbyid/:id"
+        ],
+        "DELETE": [
+          "/deleteverticalbyid/:id"
+        ]
+      },
+      "coordinator": {
+        "GET": [
+          "/getcoordinators"
+        ],
+        "POST": [
+          "/createcoordinators"
+        ],
+        "PUT": [
+          "/updatecoordinatorsbyrole"
+        ],
+        "DELETE": [
+          "/deletecoordinators/:id"
+        ]
+      }
+    },
+    "chapter": {
+      "membership": {
+        "GET": [
+          "/getallmemberships",
+          "/getmembershipbyid/:id"
+        ],
+        "POST": [
+          "/createmembership",
+          "/createpresident"
+        ],
+        "PUT": [
+          "/updatemembershipbyid/:id"
+        ],
+        "DELETE": [
+          "/deletemembershipbyid/:id"
+        ]
+      },
+      "main": {
+        "GET": [
+          "/getallchapters",
+          "/getchapterbyid/:id",
+          "/getallchapternames"
+        ],
+        "POST": [
+          "/createchapter"
+        ],
+        "PUT": [
+          "/updatechapterbyid/:id"
+        ],
+        "DELETE": [
+          "/deletechapterbyid/:id"
+        ]
+      },
+      "statistics": {
+        "GET": [
+          "/getstatistics",
+          "/getstatisticsbyid/:id"
+        ],
+        "POST": [
+          "/createstatistics"
+        ],
+        "PUT": [
+          "/updatestatisticsbyid/:id"
+        ],
+        "DELETE": [
+          "/deletestatisticsbyid/:id"
+        ]
+      }
+    },
+    "profile": {
+      "GET": [
+        "/showprofile",
+        "/getallprofiles",
+        "/getprofile",
+        "/getprofilebyid/:id"
+      ],
+      "POST": [
+        "/createprofile",
+        "/searchvertical"
+      ],
+      "PUT": [
+        "/updateprofile"
+      ],
+      "DELETE": [
+        "/deleteprofilebyid/:id"
+      ]
+    },
+    "meeting": {
+      "GET": [
+        "/getmeetings",
+        "/getfalsemeetings",
+        "/getmeetingbyid/:id",
+        "/getlatestmeeting"
+      ],
+      "POST": [
+        "/createmeeting"
+      ],
+      "PUT": [
+        "/updatemeeting"
+      ],
+      "DELETE": [
+        "/deletemeetingbyid/:id"
+      ],
+      "attendance": {
+        "GET": [
+          "/getallattendances",
+          "/getattendancebyid/:id",
+          "/getattendanceofuser/:userid",
+          "/getattendanceofmine"
+        ],
+        "POST": [
+          "/createattendance",
+          "/createbulkattendances"
+        ],
+        "PUT": [
+          "/updateattendancebyid/:id"
+        ],
+        "DELETE": [
+          "/deleteattendancebyid/:id"
+        ]
+      }
+    },
+    "slips": {
+      "one2one": {
+        "GET": [
+          "/getone2ones",
+          "/getone2onebyid/:id"
+        ],
+        "POST": [
+          "/createone2one"
+        ],
+        "PUT": [
+          "/updateone2onebyid/:id",
+          "/updatebulkm2mstatusbyuserid"
+        ],
+        "DELETE": [
+          "/deleteone2onebyid/:id"
+        ]
+      },
+      "referral": {
+        "GET": [
+          "/getallreferrals",
+          "/getrefferalbyid/:id"
+        ],
+        "POST": [
+          "/createreferral"
+        ],
+        "PUT": [
+          "/updaterefferalbyid/:id",
+          "/updatebulkreferralstatusbyreferrer"
+        ],
+        "DELETE": [
+          "/deleterefferalbyid/:id"
+        ]
+      },
+      "visitor": {
+        "GET": [
+          "/getallvisitors",
+          "/getvisitorbyid/:id"
+        ],
+        "POST": [
+          "/createvisitor"
+        ],
+        "PUT": [
+          "/updatevisitorbyid/:id"
+        ],
+        "DELETE": [
+          "/deletevisitorbyid/:id"
+        ]
+      },
+      "tyftb": {
+        "GET": [
+          "/getalltyftb",
+          "/gettyftbbyid/:id"
+        ],
+        "POST": [
+          "/createtyftb"
+        ],
+        "PUT": [
+          "/updatetyftbbyid/:id",
+          "/updatebulktyftbstatusbypayer"
+        ],
+        "DELETE": [
+          "/deletetyftbbyid/:id"
+        ]
+      }
+    },
+    "member": {
+      "GET": [
+        "/getprofiles"
+      ],
+      "statistics": {
+        "GET": [
+          "/getallstatistics",
+          "/getstatisticsbyid/:id"
+        ],
+        "POST": [
+          "/createstatistics"
+        ],
+        "PUT": [
+          "/updatestatisticsbyid/:id"
+        ],
+        "DELETE": [
+          "/deletestatisticsbyid/:id"
+        ]
+      }
+    },
+    "event": {
+      "GET": [
+        "/getallevents",
+        "/geteventbyid/:id",
+        "/getlatestevent"
+      ],
+      "POST": [
+        "/createevent"
+      ],
+      "PUT": [
+        "/updateevent"
+      ],
+      "DELETE": [
+        "/deleteeventbyid/:id"
+      ]
+    },
+    "dashboard": {
+      "GET": [
+        "/coordinatoraccess",
+        "/isadmin",
+        "/caneditevents",
+        "/getactivityupcoming/:timeline",
+        "/getactivity/:timeline",
+        "/weekstats",
+        "/getactivity",
+        "/getrenewaldate",
+        "/getupcomingevents",
+        "/getchapteroverview"
+      ],
+      "POST": [
+        "/searchchapter",
+        "/searchalluser",
+        "/searchuser"
+      ]
+    },
+    "notification": {
+      "GET": [
+        "/getallnotifications",
+        "/getnotificationbyid/:id"
+      ],
+      "POST": [
+        "/createnotification",
+        "/createbulknotifications",
+        "/createnotificationwithoutsender",
+        "/createbulknotificationwithoutsenderbyid",
+        "/createbulknotificationsforchapters"
+      ],
+      "PATCH": [
+        "/updatenotificationbyid/:id",
+        "/readallnotifications"
+      ],
+      "DELETE": [
+        "/deletenotificationbyid/:id"
+      ]
+    },
+    "activity": {
+      "GET": [
+        "/getactivity",
+        "/getfullactivity",
+        "/getactivity-details",
+        "/getactivityofusers",
+        "/getactivityofusersfalse"
+      ]
+    }
+  }
+}
