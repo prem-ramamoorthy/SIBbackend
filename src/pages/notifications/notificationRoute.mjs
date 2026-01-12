@@ -33,7 +33,6 @@ router.post(
 
 router.get(
     "/getallnotifications",
-
     getNotificationsValidation,
     (req, _res, next) => {
         if (typeof req.query.read === "string") {
@@ -58,7 +57,6 @@ router.get(
 
 router.get(
     "/getnotificationbyid/:id",
-
     getNotificationByIdValidation,
     handleValidationErrors,
     async (req, res) => {
@@ -74,7 +72,6 @@ router.get(
 
 router.patch(
     "/updatenotificationbyid/:id",
-
     updateNotificationValidation,
     handleValidationErrors,
     async (req, res) => {
@@ -99,7 +96,6 @@ router.patch(
 
 router.delete(
     "/deletenotificationbyid/:id",
-
     deleteNotificationValidation,
     handleValidationErrors,
     async (req, res) => {
@@ -115,7 +111,6 @@ router.delete(
 
 router.patch(
     "/readallnotifications",
-
     handleValidationErrors,
     async (req, res) => {
         try {
@@ -141,12 +136,10 @@ router.patch(
 
 router.post(
     "/createbulknotifications",
-
     createbulkNotificationValidation,
     handleValidationErrors,
     async (req, res) => {
         try {
-            
             req.body.sender = req.userid;
             const membership = await Membership.findOne({ user_id: req.userid });
             if (!membership || !membership.chapter_id) {
@@ -186,7 +179,6 @@ router.post(
 
 router.post(
     "/createnotificationwithoutsender",
-
     createNotificationValidation,
     handleValidationErrors,
     mapNamesToIds,
@@ -207,7 +199,6 @@ router.post(
 
 router.post(
     "/createbulknotificationwithoutsenderbyid",
-
     createBulkNotificationwithoutSenderValidation,
     handleValidationErrors,
     assertBodyObjectIds,
@@ -232,6 +223,54 @@ router.post(
             res.status(201).json({ message: "Notifications created successfully", count: result.length });
         } catch (err) {
             res.status(400).json({ error: err.message || "Failed to create notification" });
+        }
+    }
+);
+
+router.post(
+    "/createbulknotificationsforchapters",
+    createbulkNotificationValidation,
+    handleValidationErrors,
+    async (req, res) => {
+        try {
+            const { chapterids = [], header, content, read = false, readAt = null } = req.body;
+            if (!Array.isArray(chapterids) || chapterids.length === 0) {
+                return res.status(400).json({ error: "chapterids must be a non-empty array." });
+            }
+            if (!header || !content) {
+                return res.status(400).json({ error: "header and content are required." });
+            }
+            const sender = req.userid;
+            const chapterMemberships = await Membership.find({
+                chapter_id: { $in: chapterids },
+                membership_status: true,
+                user_id: { $ne: sender }
+            }, 'user_id chapter_id');
+
+            if (!chapterMemberships.length) {
+                return res.status(404).json({ error: "No chapter members found for notifications." });
+            }
+
+            const uniqueUserIds = [...new Set(chapterMemberships.map(m => String(m.user_id)))];
+
+            const notificationsToInsert = uniqueUserIds.map(user_id => ({
+                receiver: user_id,
+                sender,
+                header,
+                content,
+                read,
+                readAt
+            }));
+
+            const notifications = await Notification.insertMany(notificationsToInsert);
+
+            res.status(201).json({
+                message: "Bulk notifications created.",
+                count: notifications.length,
+                receivers: uniqueUserIds
+            });
+        } catch (err) {
+            res.status(400).json({ error: err.message || "Failed to create notifications" });
         }
     }
 );
