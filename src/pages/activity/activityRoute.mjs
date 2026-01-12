@@ -476,9 +476,28 @@ router.get('/getactivity-details', async (req, res) => {
 
 router.get('/getactivityofusers', async (req, res) => {
     try {
-        
+        const chapterId = req.query.chapterid || req.chapter._id;
+
+        let fromdate = req.query.fromDate ? new Date(req.query.fromDate) : null;
+        let todate = req.query.toDate ? new Date(req.query.toDate) : null;
+
+        if (fromdate && isNaN(fromdate.getTime())) {
+            return res.status(400).json({ error: "Invalid fromDate format" });
+        }
+        if (todate && isNaN(todate.getTime())) {
+            return res.status(400).json({ error: "Invalid toDate format" });
+        }
+
+        if (todate) {
+            todate.setHours(23, 59, 59, 999);
+        }
+
+        const dateFilterCreatedAt = {};
+        if (fromdate) dateFilterCreatedAt.$gte = fromdate;
+        if (todate) dateFilterCreatedAt.$lte = todate;
+
         const allMemberships = await Membership.find({
-            chapter_id: req.chapter._id,
+            chapter_id: chapterId,
             membership_status: true
         }).populate('user_id', 'username email _id');
 
@@ -492,6 +511,28 @@ router.get('/getactivityofusers', async (req, res) => {
                 if (!user || !user._id) return null;
 
                 try {
+                    // Build filters with date
+                    const referralGivenFilter = { referrer_id: user._id };
+                    const referralReceivedFilter = { referee_id: user._id };
+                    const tyftbGivenFilter = { payer_id: user._id };
+                    const tyftbReceivedFilter = { receiver_id: user._id };
+                    const m2mFilter = {
+                        $or: [
+                            { member1_id: user._id },
+                            { member2_id: user._id }
+                        ]
+                    };
+                    const visitorFilter = { inviting_member_id: user._id };
+
+                    if (fromdate || todate) {
+                        referralGivenFilter.createdAt = dateFilterCreatedAt;
+                        referralReceivedFilter.createdAt = dateFilterCreatedAt;
+                        tyftbGivenFilter.createdAt = dateFilterCreatedAt;
+                        tyftbReceivedFilter.createdAt = dateFilterCreatedAt;
+                        m2mFilter.createdAt = dateFilterCreatedAt;
+                        visitorFilter.createdAt = dateFilterCreatedAt;
+                    }
+
                     const [
                         referralsGiven,
                         referralsReceived,
@@ -500,26 +541,21 @@ router.get('/getactivityofusers', async (req, res) => {
                         m2mCount,
                         visitorsBrought
                     ] = await Promise.all([
-                        Referral.countDocuments({ referrer_id: user._id }),
-                        Referral.countDocuments({ referee_id: user._id }),
-                        TYFTB.countDocuments({ payer_id: user._id }),
-                        TYFTB.countDocuments({ receiver_id: user._id }),
-                        OneToOneMeeting.countDocuments({
-                            $or: [
-                                { member1_id: user._id },
-                                { member2_id: user._id }
-                            ]
-                        }),
-                        Visitor.countDocuments({ inviting_member_id: user._id })
+                        Referral.countDocuments(referralGivenFilter),
+                        Referral.countDocuments(referralReceivedFilter),
+                        TYFTB.countDocuments(tyftbGivenFilter),
+                        TYFTB.countDocuments(tyftbReceivedFilter),
+                        OneToOneMeeting.countDocuments(m2mFilter),
+                        Visitor.countDocuments(visitorFilter)
                     ]);
 
                     const [givenAgg, receivedAgg] = await Promise.all([
                         TYFTB.aggregate([
-                            { $match: { payer_id: user._id } },
+                            { $match: tyftbGivenFilter },
                             { $group: { _id: null, total: { $sum: '$business_amount' } } }
                         ]),
                         TYFTB.aggregate([
-                            { $match: { receiver_id: user._id } },
+                            { $match: tyftbReceivedFilter },
                             { $group: { _id: null, total: { $sum: '$business_amount' } } }
                         ])
                     ]);

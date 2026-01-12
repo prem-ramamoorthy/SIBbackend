@@ -17,7 +17,7 @@ router.post(
   mapNamesToIds,
   async (req, res) => {
     try {
-      
+
       req.body.chapter_id = req.chapter._id;
 
       let newUserId = req.body.user_id;
@@ -79,8 +79,12 @@ router.post(
 
 router.get('/getallmemberships', async (req, res) => {
   try {
-    const docs = await Membership.aggregate([
-      { $match: { chapter_id: req.chapter._id } },
+    const chapterid = req.query.chapter_id || (req.chapter && req.chapter._id);
+    const matchStage = chapterid
+      ? { $match: { chapter_id: new mongoose.Types.ObjectId(chapterid) } }
+      : {};
+    const pipeline = [
+      ...(chapterid ? [matchStage] : []),
       { $sort: { createdAt: -1 } },
       {
         $lookup: {
@@ -114,7 +118,8 @@ router.get('/getallmemberships', async (req, res) => {
           chapter: { _id: 1, chapter_name: 1, chapter_code: 1 }
         }
       }
-    ]);
+    ];
+    const docs = await Membership.aggregate(pipeline);
     res.status(200).json(docs);
   } catch (err) {
     res.status(500).json({ error: err.message });
