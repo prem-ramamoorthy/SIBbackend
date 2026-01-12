@@ -201,7 +201,6 @@ Public.get('/stats', async (req, res) => {
     const results = await TYFTB.aggregate([
       {
         $match: {
-          status: true,
           ...dateFilter
         }
       },
