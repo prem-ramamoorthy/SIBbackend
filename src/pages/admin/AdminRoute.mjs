@@ -126,6 +126,116 @@ AdminRouter.get('/chapter-performance', async (req, res) => {
     }
 });
 
+AdminRouter.get('/chapter-performance/:id', async (req, res) => {
+    try {
+        const time = req.query.time || 'all_time'; // 'month', 'week', 'year'
+        let dateFilter = {};
+
+        const chapterId = req.params.id;
+
+        if (time === 'year') {
+            const lastYear = new Date();
+            lastYear.setFullYear(lastYear.getFullYear() - 1);
+            dateFilter = { $gte: lastYear };
+        } else if (time === 'month') {
+            const lastMonth = new Date();
+            lastMonth.setDate(lastMonth.getDate() - 30);
+            dateFilter = { $gte: lastMonth };
+        } else if (time === 'week') {
+            const lastWeek = new Date();
+            lastWeek.setDate(lastWeek.getDate() - 7);
+            dateFilter = { $gte: lastWeek };
+        }
+
+        const addDateMatch = (pipeline, dateField) => {
+            if (time !== 'all_time') {
+                pipeline.unshift({ $match: { [dateField]: dateFilter } });
+            }
+            return pipeline;
+        };
+
+        // Get chapter info
+        const chapter = await Chapter.findById(chapterId).select('chapter_name region_id');
+        if (!chapter) {
+            return res.status(404).json({ error: 'Chapter not found' });
+        }
+
+        // Get region info
+        const region = await Region.findById(chapter.region_id).select('region_name');
+
+        // Get member count
+        const members = await Membership.countDocuments({ chapter_id: chapterId });
+
+        // Get referrals count
+        const referralsAgg = await Referral.aggregate(
+            addDateMatch([
+                {
+                    $lookup: {
+                        from: 'chapter_memberships',
+                        localField: 'referrer_id',
+                        foreignField: 'user_id',
+                        as: 'referrer'
+                    }
+                },
+                { $unwind: '$referrer' },
+                { $project : { chapter_id: 1, 'referrer.chapter_id': 1 } },
+            ], 'createdAt')
+        );
+
+        const referrals = referralsAgg.filter(r => r.referrer.chapter_id.toString() === chapterId).length;
+
+        // Get m2m count
+        const m2msAgg = await OneToOneMeeting.aggregate(
+            addDateMatch([
+                {
+                    $lookup: {
+                        from: 'chapter_memberships',
+                        localField: 'member1_id',
+                        foreignField: 'user_id',
+                        as: 'member'
+                    }
+                },
+                { $unwind: '$member' },
+                { $project : { chapter_id: 1, 'member.chapter_id': 1 } },
+            ], 'createdAt')
+        );
+        const m2ms = m2msAgg.filter(m => m.member.chapter_id.toString() === chapterId).length;
+
+        // Get TYFTB business amount
+        const tyftbsAgg = await TYFTB.aggregate(
+            addDateMatch([
+                {
+                    $lookup: {
+                        from: 'chapter_memberships',
+                        localField: 'payer_id',
+                        foreignField: 'user_id',
+                        as: 'payer'
+                    }
+                },
+                { $unwind: '$payer' },
+                { $project : { chapter_id: 1, 'payer.chapter_id': 1, business_amount: 1 } },
+            ], 'createdAt')
+        );
+        const tyftbs = tyftbsAgg
+            .filter(t => t.payer.chapter_id.toString() === chapterId)
+            .reduce((sum, t) => sum + (t.business_amount ? Number(t.business_amount) : 0), 0);
+
+        res.status(200).json({
+            chapter: {
+                id: chapterId,
+                name: chapter.chapter_name,
+                region: region?.region_name ?? null
+            },
+            members,
+            referrals,
+            m2ms,
+            tyftbs
+        });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 AdminRouter.get('/stats', async (_req, res) => {
     try {
         const now = new Date();
@@ -217,44 +327,44 @@ AdminRouter.get('/stats', async (_req, res) => {
 
 AdminRouter.get('/chapter-revenue', async (req, res) => {
     try {
-    const chaptersRevenue = await TYFTB.aggregate([
-        {
-            $lookup: {
-                from: 'chapter_memberships',
-                localField: 'payer_id',
-                foreignField: 'user_id',
-                as: 'payer'
+        const chaptersRevenue = await TYFTB.aggregate([
+            {
+                $lookup: {
+                    from: 'chapter_memberships',
+                    localField: 'payer_id',
+                    foreignField: 'user_id',
+                    as: 'payer'
+                }
+            },
+            { $unwind: '$payer' },
+            {
+                $lookup: {
+                    from: 'chapters',
+                    localField: 'payer.chapter_id',
+                    foreignField: '_id',
+                    as: 'chapter'
+                }
+            },
+            { $unwind: '$chapter' },
+            {
+                $group: {
+                    _id: '$chapter._id',
+                    chapter_name: { $first: '$chapter.chapter_name' },
+                    total_business_amount: { $sum: '$business_amount' }
+                }
+            },
+            {
+                $project: {
+                    chapter_name: 1,
+                    total_business_amount: 1,
+                    _id: 0
+                }
             }
-        },
-        { $unwind: '$payer' },
-        {
-            $lookup: {
-                from: 'chapters',
-                localField: 'payer.chapter_id',
-                foreignField: '_id',
-                as: 'chapter'
-            }
-        },
-        { $unwind: '$chapter' },
-        {
-            $group: {
-                _id: '$chapter._id',
-                chapter_name: { $first: '$chapter.chapter_name' },
-                total_business_amount: { $sum: '$business_amount' }
-            }
-        },
-        {
-            $project: {
-                chapter_name: 1,
-                total_business_amount: 1,
-                _id: 0
-            }
-        }
-    ]);
-    res.status(200).json(chaptersRevenue);
-} catch (error) {
-    res.status(500).json({ error: error.message });
-}
+        ]);
+        res.status(200).json(chaptersRevenue);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
 });
 
 export default AdminRouter;
