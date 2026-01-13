@@ -39,7 +39,7 @@ router.put('/updatecoverimage/:id', async (req, res) => {
     try {
         const result = await Gallery.findByIdAndUpdate(
             req.params.id,
-            { $set: { coverImg: "" } },
+            { $set: { coverImg: req.body.coverImg } },
             { new: true }
         );
         if (!result) {
