@@ -65,6 +65,158 @@ Access the full list of API endpoints in [`/routes.json`](./routes.json).
 | **Total** | **123** |
 
 ---
+## Architecture
+
+The following diagram represents the high-level system architecture, clearly separating user roles, frontend responsibilities, backend services, and infrastructure dependencies. It is written using Mermaid and can be rendered directly by GitHub.
+
+```mermaid
+graph TD
+    %% Styles
+    classDef frontend fill:#e1f5fe,stroke:#01579b,stroke-width:2px,color:#01579b;
+    classDef backend fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#2e7d32;
+    classDef user fill:#fff9c4,stroke:#fbc02d,stroke-width:2px,color:black;
+    classDef ext fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px,color:#4a148c;
+    classDef public fill:#ffebee,stroke:#c62828,stroke-width:2px,color:#c62828;
+
+    %% =====================
+    %% User Actors
+    %% =====================
+    subgraph "User Actors"
+        A["Admin (Region Owner)"]:::user
+        P["President"]:::user
+        C["Coordinator"]:::user
+        M["Member"]:::user
+        V["Public Visitor"]:::user
+    end
+
+    %% =====================
+    %% Frontend Layer
+    %% =====================
+    subgraph "Frontend Layer (React + Vite + Tailwind)"
+
+        subgraph "Public Zone"
+            Hero["Hero Page"]:::public
+            PubGal["Public Gallery (Approved M2M Proofs)"]:::public
+        end
+
+        subgraph "Authentication"
+            Login["Login UI"]:::frontend
+        end
+
+        subgraph "Protected Dashboards"
+            AD["Admin Dashboard"]:::frontend
+            PD["President Dashboard"]:::frontend
+            CD["Coordinator Dashboard"]:::frontend
+            MD["Member Dashboard"]:::frontend
+
+            Viz["Recharts – Analytics"]:::frontend
+            Anim["GSAP – Animations"]:::frontend
+        end
+    end
+
+    %% =====================
+    %% Backend Layer
+    %% =====================
+    subgraph "Backend Layer (Custom REST API)"
+        API["API Gateway / Controllers"]:::backend
+        AuthMw["Session & Role-based Auth Middleware"]:::backend
+
+        subgraph "Business Logic Services"
+            RegSvc["Region & Chapter Service"]:::backend
+            MemSvc["Membership Service"]:::backend
+            SlipSvc["Slip / Referral Service"]:::backend
+            NotifSvc["Notification Service (Email + In-App)"]:::backend
+        end
+    end
+
+    %% =====================
+    %% Data & Infrastructure
+    %% =====================
+    subgraph "Data & Infrastructure"
+        FBAuth["Firebase Authentication"]:::ext
+        FBStore["Firebase Storage"]:::ext
+        DB["Primary Database"]:::ext
+    end
+
+    %% =====================
+    %% Authentication Flow
+    %% =====================
+    Login -->|Authenticate| FBAuth
+    FBAuth -->|JWT / ID Token| Login
+    Login -->|Send Token| API
+    API -->|Set Session Cookie| Login
+
+    %% =====================
+    %% User Navigation
+    %% =====================
+    V --> Hero
+    V --> PubGal
+    A --> AD
+    P --> PD
+    C --> CD
+    M --> MD
+
+    %% =====================
+    %% Permission Hierarchy (Read-only Views)
+    %% =====================
+    PD -.->|Read-only Supervision| CD
+    AD -.->|Global Oversight| PD
+
+    %% =====================
+    %% Dashboard Actions
+    %% =====================
+    AD -->|Create Regions / Chapters| RegSvc
+    AD -->|Broadcast Notifications| NotifSvc
+
+    PD -->|Create Members / Events| MemSvc
+    PD -->|Revoke Roles| MemSvc
+
+    CD -->|Mark Attendance| MemSvc
+    CD -->|Approve / Reject Slips| SlipSvc
+    CD -->|Low Attendance Alerts| NotifSvc
+
+    MD -->|Submit TYB / Referral / M2M| SlipSvc
+    MD -->|Upload Proof| FBStore
+    FBStore -->|Proof URL| SlipSvc
+
+    %% =====================
+    %% Public Gallery Flow
+    %% =====================
+    SlipSvc -->|Fetch Approved M2M| PubGal
+    FBStore -->|Serve Images| PubGal
+
+    %% =====================
+    %% Backend Processing
+    %% =====================
+    API --> AuthMw
+    AuthMw --> RegSvc
+    AuthMw --> MemSvc
+    AuthMw --> SlipSvc
+    AuthMw --> NotifSvc
+
+    RegSvc --> DB
+    MemSvc --> DB
+    SlipSvc --> DB
+    NotifSvc --> DB
+
+    %% =====================
+    %% Notifications
+    %% =====================
+    NotifSvc -->|Email| A
+    NotifSvc -->|Email| P
+    NotifSvc -->|Email| C
+    NotifSvc -->|Email| M
+    NotifSvc -->|In-App Notifications| DB
+
+    AD -.->|Fetch Notifications| NotifSvc
+    PD -.->|Fetch Notifications| NotifSvc
+    CD -.->|Fetch Notifications| NotifSvc
+    MD -.->|Fetch Notifications| NotifSvc
+```
+![System Architecture Diagram 1](docs/architecture/system-architecture1.png)
+![System Architecture Diagram 2](docs/architecture/system-architecture2.png)
+
+---
 
 ## Getting Started
 
