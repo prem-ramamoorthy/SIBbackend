@@ -35,6 +35,23 @@ router.delete('/delete/:id', async (req, res) => {
     }
 });
 
+router.put('/updatecoverimage/:id', async (req, res) => {
+    try {
+        const result = await Gallery.findByIdAndUpdate(
+            req.params.id,
+            { $set: { coverImg: "" } },
+            { new: true }
+        );
+        if (!result) {
+            return res.status(404).json({ error: 'Gallery not found' });
+        }
+        res.json({ message: 'Cover image Updated successfully' });
+    } catch (err) {
+        res.status(400).json({ error: err.message });
+    }
+});
+
+
 /**
  * Add photos to gallery by ID
  */
