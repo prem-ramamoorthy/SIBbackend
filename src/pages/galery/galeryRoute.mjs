@@ -51,7 +51,6 @@ router.put('/updatecoverimage/:id', async (req, res) => {
     }
 });
 
-
 /**
  * Add photos to gallery by ID
  */
