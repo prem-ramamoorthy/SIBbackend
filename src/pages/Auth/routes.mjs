@@ -104,12 +104,8 @@ router.post("/sessionLogin", loginValidator, handleValidation, async (req, res) 
   if (!idToken) {
     return res.status(400).json({ error: "Missing ID token" });
   }
-  if (user_id && admins.includes(user_id)) {
-    try {
-      isadmin = true;
-    } catch (error) {
-      console.error("Error setting custom claims:", error);
-    }
+  if (user_id && admins.map(id => id.trim()).filter(Boolean).includes(user_id)) {
+    isadmin = true;
   }
   try {
     const sessionCookie = await admin.auth().createSessionCookie(idToken, { expiresIn });
