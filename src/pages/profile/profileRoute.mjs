@@ -288,6 +288,15 @@ router.get('/getprofile', async (req, res) => {
       { $unwind: { path: '$user', preserveNullAndEmptyArrays: true } },
       {
         $lookup: {
+          from: 'chapter_memberships',
+          localField: 'user_id',
+          foreignField: 'user_id',
+          as: 'membership'
+        }
+      },
+      { $unwind: { path: '$membership', preserveNullAndEmptyArrays: true } },
+      {
+        $lookup: {
           from: 'verticals',
           localField: 'vertical_ids',
           foreignField: '_id',
@@ -322,7 +331,8 @@ router.get('/getprofile', async (req, res) => {
           createdAt: 1,
           updatedAt: 1,
           user: { _id: 1, name: 1, email: 1, username: 1 },
-          verticals: { vertical_name: 1 }
+          verticals: { vertical_name: 1 },
+          membership: { idno: 1 }
         }
       }
     ]);
