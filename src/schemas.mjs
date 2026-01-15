@@ -146,6 +146,11 @@ const membershipSchema = new Schema(
             required: true,
             index: true
         },
+        idno : {
+            type : String,
+            required : true,
+            unique : true
+        },
         chapter_id: {
             type: Types.ObjectId,
             ref: 'chapters',

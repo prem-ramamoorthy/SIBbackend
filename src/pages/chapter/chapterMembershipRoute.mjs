@@ -33,8 +33,8 @@ router.post(
       if (!req.body.user_id || !req.body.chapter_id) {
         return res.status(400).json({ message: 'Both valid user_id and chapter_id are required.' });
       }
-
       const membership = new Membership(req.body);
+      membership.idno = `SIB${1000 + await Membership.countDocuments() + 10}`;
       const saved = await membership.save();
       return res.status(201).json(saved);
 
@@ -67,6 +67,7 @@ router.post(
       }
 
       const membership = new Membership(req.body);
+      membership.idno = `SIB${1000 + await Membership.countDocuments() + 10}`;
       const saved = await membership.save();
       return res.status(201).json(saved);
 
@@ -187,6 +188,23 @@ router.delete('/deletemembershipbyid/:id', idValidation, handleValidationErrors,
     if (!deleted)
       return res.status(404).json({ message: 'Membership not found' });
     res.status(200).json({ message: 'Membership deleted successfully' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.post('/setidno', async (req, res) => {
+  try {
+    let id = 1001 ;
+    const contdoc = await Membership.countDocuments();
+    const memberships = await Membership.find();
+    for (const membership of memberships) {
+      if (!membership.idno) {
+        membership.idno = `SIB${id++}`;
+        await membership.save();
+      }
+    }
+    res.status(200).json({ message: `Updated ${memberships.length} memberships with idno` });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

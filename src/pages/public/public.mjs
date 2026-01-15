@@ -1,5 +1,5 @@
 import express from 'express';
-import { MemberProfile, Vertical, Chapter, Region, Referral, Membership, TYFTB } from '../../schemas.mjs';
+import { MemberProfile, Vertical, Chapter, Region, Referral, Membership, TYFTB , Meeting } from '../../schemas.mjs';
 import mongoose from 'mongoose';
 
 const Public = express.Router();
@@ -381,5 +381,75 @@ Public.get('/showprofile',
     res.send({ editable:false })
   }
 );
+
+Public.get('/getmeetings',  async (req, res) => {
+  try {
+    const docs = await Meeting.aggregate([
+      { $match: { chapter_id: req.chapter._id } },
+      { $sort: { createdAt: -1 } },
+      {
+        $lookup: {
+          from: 'chapters',
+          localField: 'chapter_id',
+          foreignField: '_id',
+          as: 'chapter'
+        }
+      },
+      { $unwind: { path: '$chapter', preserveNullAndEmptyArrays: true } },
+      {
+        $project: {
+          meeting_date: 1,
+          meeting_time: 1,
+          meeting_type: 1,
+          duration: 1,
+          title: 1,
+          location: 1,
+          meeting_notes: 1,
+          meeting_status: 1,
+          createdAt: 1,
+          updatedAt: 1,
+          chapter: { _id: 1, chapter_name: 1, chapter_code: 1 }
+        }
+      }
+    ]);
+    res.status(200).json(docs);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+Public.get('/getallevents', async (req, res) => {
+    try {
+        
+        const chapter = await Chapter.findById(req.chapter._id);
+        if (!chapter) {
+            return res.status(404).json({ error: "Chapter not found." });
+        }
+        const docs = await Event.aggregate([
+            { $match: { chapter_id: chapter._id } },
+            { $sort: { event_date: -1 } },
+            { $lookup: { from: 'chapters', localField: 'chapter_id', foreignField: '_id', as: 'chapter' } },
+            { $unwind: { path: '$chapter', preserveNullAndEmptyArrays: true } },
+            {
+                $project: {
+                    event_title: 1,
+                    event_description: 1,
+                    event_date: 1,
+                    event_time: 1,
+                    location: 1,
+                    organizer_company: 1,
+                    event_type: 1,
+                    event_status: 1,
+                    createdAt: 1,
+                    updatedAt: 1,
+                    chapter: { _id: 1, chapter_name: 1, chapter_code: 1 },
+                }
+            }
+        ]);
+        res.status(200).json(docs);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
 
 export default Public;
