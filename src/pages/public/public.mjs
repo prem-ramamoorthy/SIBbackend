@@ -1,5 +1,5 @@
 import express from 'express';
-import { MemberProfile, Vertical, Chapter, Region, Referral, Membership, TYFTB , Meeting } from '../../schemas.mjs';
+import { MemberProfile, Vertical, Chapter, Region, Referral, Membership, TYFTB, Meeting, Event } from '../../schemas.mjs';
 import mongoose from 'mongoose';
 
 const Public = express.Router();
@@ -385,7 +385,6 @@ Public.get('/showprofile',
 Public.get('/getmeetings',  async (req, res) => {
   try {
     const docs = await Meeting.aggregate([
-      { $match: { chapter_id: req.chapter._id } },
       { $sort: { createdAt: -1 } },
       {
         $lookup: {
@@ -414,19 +413,14 @@ Public.get('/getmeetings',  async (req, res) => {
     ]);
     res.status(200).json(docs);
   } catch (err) {
+    console.error('Error in /getmeetings:', err);
     res.status(500).json({ error: err.message });
   }
 });
 
-Public.get('/getallevents', async (req, res) => {
+Public.get('/getallevents', async (_, res) => {
     try {
-        
-        const chapter = await Chapter.findById(req.chapter._id);
-        if (!chapter) {
-            return res.status(404).json({ error: "Chapter not found." });
-        }
         const docs = await Event.aggregate([
-            { $match: { chapter_id: chapter._id } },
             { $sort: { event_date: -1 } },
             { $lookup: { from: 'chapters', localField: 'chapter_id', foreignField: '_id', as: 'chapter' } },
             { $unwind: { path: '$chapter', preserveNullAndEmptyArrays: true } },
@@ -448,6 +442,7 @@ Public.get('/getallevents', async (req, res) => {
         ]);
         res.status(200).json(docs);
     } catch (err) {
+      console.error('Error in /getallevents:', err);
         res.status(500).json({ error: err.message });
     }
 });

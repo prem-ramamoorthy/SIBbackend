@@ -182,6 +182,32 @@ router.put(
   }
 );
 
+router.put(
+  '/updatemembershipbyids',
+  async (req, res) => {
+    try {
+      const ids = req.body.ids;
+      if (!Array.isArray(ids) || ids.length === 0) {
+        return res.status(400).json({ message: 'ids must be a non-empty array' });
+      }
+      const renewal_date = req.body.renewal_date;
+      if (!renewal_date) {
+        return res.status(400).json({ message: 'renewal_date is required' });
+      }
+      const updated = await Membership.updateMany(
+        { _id: { $in: ids } },
+        req.body,
+        { new: true, runValidators: true }
+      );
+      if (!updated)
+        return res.status(404).json({ message: 'Membership not found' });
+      res.status(200).json(updated);
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  }
+);
+
 router.delete('/deletemembershipbyid/:id', idValidation, handleValidationErrors, async (req, res) => {
   try {
     const deleted = await Membership.findByIdAndDelete(req.params.id);
