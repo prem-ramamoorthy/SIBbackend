@@ -34,7 +34,6 @@ const app = express();
 
 const allowedOrigins = [
   "https://www.senguntharinbusiness.in",
-  "https://api.senguntharinbusiness.in",
   "https://localhost",
   "http://localhost",
   "capacitor://localhost",
