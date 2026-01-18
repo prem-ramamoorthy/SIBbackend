@@ -14,7 +14,7 @@ router.post(
   mapNamesToIds,
   async (req, res) => {
     try {
-
+      console.log(req.body)
       req.body.member1_id = req.userid;
 
       if (!req.body.member1_id || !req.body.member2_id || !req.body.chapter_id || !req.body.created_by) {
@@ -23,7 +23,12 @@ router.post(
 
       let gallery = await Gallery.findOne({ chapter_id: req.body.chapter_id }).select('_id').lean();
       if (req.body.chapter_name) {
-        gallery = await Gallery.findOne({ title: `${req.body.chapter_name} M2M gallery` }).select('_id').lean();
+        const galname = req.body.chapter_name
+          .split(' ')
+          .map(word => word.charAt(0).toUpperCase())
+          .join('');
+
+        gallery = await Gallery.findOne({ title: `${galname} M2M gallery` }).select('_id').lean();
       }
 
       if (req.body.image_url) {

@@ -10,21 +10,19 @@ router.use(pageRouter);
 
 router.post(
   '/createprofile',
-
   mapNamesToIds,
   createProfileValidation,
   handleValidationErrors,
   mapverticalIds,
   async (req, res) => {
     try {
-
       const chapter = await Chapter.findById(req.chapter._id);
       if (!chapter) {
         return res.status(404).json({ error: "Chapter not found." });
       }
       req.body.chapter_id = chapter._id;
       req.body.region_id = chapter.region_id;
-      req.body.user_id = userObj._id;
+      req.body.user_id = req.userid
       if (req.body.vertical_ids && !Array.isArray(req.body.vertical_ids)) {
         req.body.vertical_ids = [req.body.vertical_ids];
       }
