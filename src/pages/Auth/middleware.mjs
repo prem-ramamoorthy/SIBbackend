@@ -2,11 +2,14 @@ import admin from "./firebase.mjs";
 import { validationResult } from "express-validator";
 
 export const authenticateUser = async (req, res, next) => {
-  // --- THE FIX ---
-  // 1. Try to read the standard cookie (Works for Web & Android)
-  // 2. If blocked by Apple, fall back to the custom header (Works for iOS)
-  const sessionCookie = req.cookies.session || req.headers['x-session-token'] || "";
-  // ---------------
+  // --- THE BULLETPROOF FIX ---
+  let sessionCookie = req.cookies.session;
+  
+  if (!sessionCookie && req.headers.authorization && req.headers.authorization.startsWith('Bearer ')) {
+    sessionCookie = req.headers.authorization.split('Bearer ')[1];
+  }
+  
+  sessionCookie = sessionCookie || "";
 
   try {
     const decodedClaims = await admin.auth().verifySessionCookie(sessionCookie, true);
