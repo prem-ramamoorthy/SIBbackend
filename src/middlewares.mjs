@@ -4,7 +4,11 @@ import { validationResult } from 'express-validator';
 import { Chapter, Membership, Referral, MemberProfile, User, Vertical } from "./schemas.mjs";
 
 export const authenticateCookie = async (req, res, next) => {
-  const sessionCookie = req.cookies.session || "";
+  // --- THE FIX ---
+  // If Apple strips the cookie, it falls back to the custom header we send from main.jsx!
+  const sessionCookie = req.cookies.session || req.headers['x-session-token'] || "";
+  // ---------------
+  
   try {
     const decodedClaims = await admin.auth().verifySessionCookie(sessionCookie, true);
     req.user = decodedClaims;
