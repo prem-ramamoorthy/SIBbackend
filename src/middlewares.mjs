@@ -4,10 +4,15 @@ import { validationResult } from 'express-validator';
 import { Chapter, Membership, Referral, MemberProfile, User, Vertical } from "./schemas.mjs";
 
 export const authenticateCookie = async (req, res, next) => {
-  // --- THE FIX ---
-  // If Apple strips the cookie, it falls back to the custom header we send from main.jsx!
-  const sessionCookie = req.cookies.session || req.headers['x-session-token'] || "";
-  // ---------------
+  // --- THE BULLETPROOF FIX ---
+  let sessionCookie = req.cookies.session;
+  
+  if (!sessionCookie && req.headers.authorization && req.headers.authorization.startsWith('Bearer ')) {
+    sessionCookie = req.headers.authorization.split('Bearer ')[1];
+  }
+  
+  sessionCookie = sessionCookie || "";
+  // ---------------------------
   
   try {
     const decodedClaims = await admin.auth().verifySessionCookie(sessionCookie, true);
