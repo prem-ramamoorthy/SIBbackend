@@ -2,16 +2,7 @@ import admin from "./pages/Auth/firebase.mjs";
 import mongoose from 'mongoose';
 import { validationResult } from 'express-validator';
 import { Chapter, Membership, Referral, MemberProfile, User, Vertical } from "./schemas.mjs";
-export const authenticateCookie = async (req, res, next) => {
-  // ADD THESE TWO LINES:
-  console.log("🚨 TRAP 3: Incoming request to ->", req.originalUrl);
-  console.log("🚨 TRAP 3: Authorization Header received ->", req.headers.authorization);
 
-  let sessionCookie = req.cookies.session;
-  
-  if (!sessionCookie && req.headers.authorization && req.headers.authorization.startsWith('Bearer ')) {
-    sessionCookie = req.headers.authorization.split('Bearer ')[1];
-  }
 
 export const authenticateCookie = async (req, res, next) => {
   // --- THE BULLETPROOF FIX ---
