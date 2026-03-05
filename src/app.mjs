@@ -50,6 +50,8 @@ const corsOptions = {
     }
   },
   credentials: true,
+  // --- ADD THIS SINGLE LINE ---
+  allowedHeaders: ["Content-Type", "Authorization", "x-session-token"],
 };
 
 app.use(morgan("dev"));
