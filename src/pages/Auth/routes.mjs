@@ -115,7 +115,8 @@ router.post("/sessionLogin", loginValidator, handleValidation, async (req, res) 
       secure: true,
       sameSite: "None",
     });
-    res.json({ message: "Session created" , isadmin });
+    // We keep the standard cookie for Web/Android, but also send it in the JSON for iOS!
+    res.json({ message: "Session created", isadmin, sessionToken: sessionCookie });
   } catch (error) {
     console.error("Error creating session cookie:", error);
     res.status(401).json({ error: "Invalid token" });
@@ -166,8 +167,13 @@ router.post("/resetPassword", resetPasswordValidator, handleValidation, async (r
 
 router.post("/refreshSession", authenticateUser, async (req, res) => {
   const expiresIn = parseInt(process.env.SESSION_EXPIRY);
+  
+  // --- THE FIX: Look for the token in the cookie OR the custom header ---
+  const currentToken = req.cookies.session || req.headers['x-session-token'];
+  // ----------------------------------------------------------------------
+
   try {
-    const newSessionCookie = await admin.auth().createSessionCookie(req.cookies.session, { expiresIn });
+    const newSessionCookie = await admin.auth().createSessionCookie(currentToken, { expiresIn });
     res.cookie("session", newSessionCookie, {
       maxAge: expiresIn,
       httpOnly: true,
@@ -175,7 +181,10 @@ router.post("/refreshSession", authenticateUser, async (req, res) => {
       sameSite: "none",
       domain: ".vercel.app",
     });
-    res.json({ message: "Session refreshed" });
+    
+    // --- THE FIX: Send the refreshed token back to iOS in the JSON body ---
+    res.json({ message: "Session refreshed", sessionToken: newSessionCookie });
+    // ----------------------------------------------------------------------
   } catch (error) {
     res.status(400).json({ error: error.message });
   }
