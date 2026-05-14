@@ -106,6 +106,15 @@ router.get('/getallmemberships', async (req, res) => {
       },
       { $unwind: { path: '$chapter', preserveNullAndEmptyArrays: true } },
       {
+        $lookup: {
+          from: 'memberprofiles',
+          localField: 'user_id',
+          foreignField: 'user_id',
+          as: 'profile'
+        }
+      },
+      { $unwind: { path: '$profile', preserveNullAndEmptyArrays: true } },
+      {
         $project: {
           role: 1,
           membership_status: 1,
@@ -115,7 +124,9 @@ router.get('/getallmemberships', async (req, res) => {
           termination_reason: 1,
           createdAt: 1,
           updatedAt: 1,
-          user: { _id: 1, username: 1, name: 1, email: 1, display_name: 1, phone_number: 1 },
+          display_name: '$profile.display_name',
+          company_phone: '$profile.company_phone',
+          user: { _id: 1, username: 1, name: 1, email: 1, phone_number: 1 },
           chapter: { _id: 1, chapter_name: 1, chapter_code: 1 }
         }
       }
@@ -140,6 +151,10 @@ router.get('/getmembershipbyid/:id', idValidation, handleValidationErrors, async
       },
       { $unwind: { path: '$chapter', preserveNullAndEmptyArrays: true } },
       {
+        $lookup: { from: 'memberprofiles', localField: 'user_id', foreignField: 'user_id', as: 'profile' }
+      },
+      { $unwind: { path: '$profile', preserveNullAndEmptyArrays: true } },
+      {
         $project: {
           role: 1,
           membership_status: 1,
@@ -149,7 +164,9 @@ router.get('/getmembershipbyid/:id', idValidation, handleValidationErrors, async
           termination_reason: 1,
           createdAt: 1,
           updatedAt: 1,
-          user: { _id: 1, username: 1, name: 1, email: 1, display_name: 1, phone_number: 1 },
+          display_name: '$profile.display_name',
+          company_phone: '$profile.company_phone',
+          user: { _id: 1, username: 1, name: 1, email: 1, phone_number: 1 },
           chapter: { _id: 1, chapter_name: 1, chapter_code: 1 }
         }
       }
