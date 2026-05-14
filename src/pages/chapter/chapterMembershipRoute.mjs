@@ -107,7 +107,7 @@ router.get('/getallmemberships', async (req, res) => {
       { $unwind: { path: '$chapter', preserveNullAndEmptyArrays: true } },
       {
         $lookup: {
-          from: 'memberprofiles',
+          from: 'profiles',
           localField: 'user_id',
           foreignField: 'user_id',
           as: 'profile'
@@ -151,7 +151,7 @@ router.get('/getmembershipbyid/:id', idValidation, handleValidationErrors, async
       },
       { $unwind: { path: '$chapter', preserveNullAndEmptyArrays: true } },
       {
-        $lookup: { from: 'memberprofiles', localField: 'user_id', foreignField: 'user_id', as: 'profile' }
+        $lookup: { from: 'profiles', localField: 'user_id', foreignField: 'user_id', as: 'profile' }
       },
       { $unwind: { path: '$profile', preserveNullAndEmptyArrays: true } },
       {
