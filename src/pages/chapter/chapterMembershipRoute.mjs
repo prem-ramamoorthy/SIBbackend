@@ -115,7 +115,7 @@ router.get('/getallmemberships', async (req, res) => {
           termination_reason: 1,
           createdAt: 1,
           updatedAt: 1,
-          user: { _id: 1, username: 1, name: 1, email: 1, phone_number: 1 },
+          user: { _id: 1, username: 1, name: 1, email: 1, display_name: 1, phone_number: 1 },
           chapter: { _id: 1, chapter_name: 1, chapter_code: 1 }
         }
       }
@@ -149,7 +149,7 @@ router.get('/getmembershipbyid/:id', idValidation, handleValidationErrors, async
           termination_reason: 1,
           createdAt: 1,
           updatedAt: 1,
-          user: { _id: 1, username: 1, name: 1, email: 1, phone_number: 1 },
+          user: { _id: 1, username: 1, name: 1, email: 1, display_name: 1, phone_number: 1 },
           chapter: { _id: 1, chapter_name: 1, chapter_code: 1 }
         }
       }
