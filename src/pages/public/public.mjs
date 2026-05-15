@@ -1,5 +1,5 @@
 import express from 'express';
-import { MemberProfile, Vertical, Chapter, Region, Referral, Membership, TYFTB, Meeting, Event } from '../../schemas.mjs';
+import { MemberProfile, Vertical, Chapter, Region, Referral, Membership, TYFTB, Meeting, Event, OneToOneMeeting } from '../../schemas.mjs';
 import mongoose from 'mongoose';
 
 const Public = express.Router();
@@ -447,6 +447,70 @@ Public.get('/getallevents', async (_, res) => {
       console.error('Error in /getallevents:', err);
         res.status(500).json({ error: err.message });
     }
+});
+
+Public.get('/getm2mslips', async (_, res) => {
+  try {
+    const docs = await OneToOneMeeting.aggregate([
+      { $sort: { meeting_date: -1 } },
+      {
+        $lookup: {
+          from: 'users',
+          localField: 'member1_id',
+          foreignField: '_id',
+          as: 'member1'
+        }
+      },
+      { $unwind: { path: '$member1', preserveNullAndEmptyArrays: true } },
+      {
+        $lookup: {
+          from: 'users',
+          localField: 'member2_id',
+          foreignField: '_id',
+          as: 'member2'
+        }
+      },
+      { $unwind: { path: '$member2', preserveNullAndEmptyArrays: true } },
+      {
+        $lookup: {
+          from: 'chapters',
+          localField: 'chapter_id',
+          foreignField: '_id',
+          as: 'chapter'
+        }
+      },
+      { $unwind: { path: '$chapter', preserveNullAndEmptyArrays: true } },
+      {
+        $lookup: {
+          from: 'users',
+          localField: 'created_by',
+          foreignField: '_id',
+          as: 'created_by_user'
+        }
+      },
+      { $unwind: { path: '$created_by_user', preserveNullAndEmptyArrays: true } },
+      {
+        $project: {
+          _id: 1,
+          member1: { _id: 1, username: 1, email: 1 },
+          member2: { _id: 1, username: 1, email: 1 },
+          chapter: { _id: 1, chapter_name: 1, chapter_code: 1 },
+          created_by_user: { _id: 1, username: 1, email: 1 },
+          image_url: 1,
+          status: 1,
+          meeting_date: 1,
+          location: 1,
+          discussion_points: 1,
+          createdAt: 1,
+          updatedAt: 1
+        }
+      }
+    ]);
+    res.status(200).json(docs);
+  } catch (err) {
+    console.error('Error in /getm2mslips:', err);
+    res.status(500).json({ error: err.message });
+  }
 });
 
 export default Public;
