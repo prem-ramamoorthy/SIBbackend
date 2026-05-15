@@ -83,7 +83,8 @@ Public.get('/getallprofiles', async (req, res) => {
         { native_place: searchRegex },
         { chapter_name: searchRegex },
         { region_name: searchRegex },
-        { vertical_names: searchRegex } // This line ensures vertical_names is searched
+        { vertical_names: searchRegex },
+        { services: searchRegex }
       ];
     }
 
@@ -126,6 +127,7 @@ Public.get('/getallprofiles', async (req, res) => {
         verticals: "$vertical_names",
         chapter: "$chapter_name",
         region: "$region_name",
+        services: 1,
         createdAt: 1
       }
     });
