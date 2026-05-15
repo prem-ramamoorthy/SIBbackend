@@ -132,7 +132,8 @@ router.get('/getallprofiles', async (req, res) => {
         { native_place: searchRegex },
         { chapter_name: searchRegex },
         { region_name: searchRegex },
-        { vertical_names: searchRegex }
+        { vertical_names: searchRegex },
+        { services: searchRegex }
       ];
     }
 
@@ -175,6 +176,7 @@ router.get('/getallprofiles', async (req, res) => {
         verticals: "$vertical_names",
         chapter: "$chapter_name",
         region: "$region_name",
+        services: 1,
         createdAt: 1
       }
     });
@@ -257,6 +259,7 @@ router.get('/getallprofiles', async (req, res) => {
           company_name: 1,
           user: 1,
           verticals: 1,
+          services: 1,
           chapter: 1,
           region: 1
         }
