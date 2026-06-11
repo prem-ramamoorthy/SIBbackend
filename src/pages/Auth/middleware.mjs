@@ -2,13 +2,21 @@ import admin from "./firebase.mjs";
 import { validationResult } from "express-validator";
 
 export const authenticateUser = async (req, res, next) => {
-  const sessionCookie = req.cookies.session || "";
+  // --- THE BULLETPROOF FIX ---
+  let sessionCookie = req.cookies.session;
+  
+  if (!sessionCookie && req.headers.authorization && req.headers.authorization.startsWith('Bearer ')) {
+    sessionCookie = req.headers.authorization.split('Bearer ')[1];
+  }
+  
+  sessionCookie = sessionCookie || "";
+
   try {
     const decodedClaims = await admin.auth().verifySessionCookie(sessionCookie, true);
     req.user = decodedClaims;
     next();
   } catch (err) {
-    return res.status(401).json({ message: "Unauthorized" , error : err });
+    return res.status(401).json({ message: "Unauthorized", error: err.message || err });
   }
 };
 

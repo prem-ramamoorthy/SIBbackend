@@ -276,6 +276,7 @@ router.get('/getactivity-details', async (req, res) => {
                         business_amount: item.business_amount || 0,
                         business_description: item.business_description || '',
                         created_at: item.created_at,
+                        status: item.status,
                         direction: payerId === userIdStr ? 'given' : 'received',
                         type: 'tyftb'
                     });
@@ -342,6 +343,7 @@ router.get('/getactivity-details', async (req, res) => {
                         contact_address: item.contact_address || '',
                         hot: item.hot || '',
                         created_at: item.created_at,
+                        status: item.status,
                         direction: referrerId === userIdStr ? 'given' : 'received',
                         type: 'referral'
                     });
@@ -411,6 +413,7 @@ router.get('/getactivity-details', async (req, res) => {
                             email: item.created_by.email || ''
                         } : { _id: null, name: 'Unknown', email: '' },
                         createdAt: item.createdAt,
+                        status: item.status,
                         direction: member1Id === userIdStr ? 'given' : 'received',
                         type: 'm2m',
                         image_url: item.image_url
