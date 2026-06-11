@@ -112,6 +112,18 @@ router.delete(
     }
 );
 
+router.delete(
+    "/deleteallnotifications",
+    async (req, res) => {
+        try {
+            const result = await Notification.deleteMany({ receiver: req.userid });
+            res.json({ success: true, deletedCount: result.deletedCount });
+        } catch (err) {
+            res.status(500).json({ error: err.message || "Failed to delete notifications" });
+        }
+    }
+);
+
 router.patch(
     "/readallnotifications",
     handleValidationErrors,
