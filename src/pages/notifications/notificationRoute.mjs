@@ -170,24 +170,50 @@ router.post(
                 return res.status(404).json({ error: "No chapter members found for notifications." });
             }
 
-            const { header, content, read = false, readAt = null } = req.body;
+            const { header, content, read = false, readAt = null, methods } = req.body;
+            const inapp = methods?.inapp !== false;
+            const push = methods?.push !== false;
+            const email = methods?.email === true;
+            
             const sender = req.userid;
 
-            const notifications = await Notification.insertMany(
-                chapterMemberships
-                    .filter(member => String(member.user_id) !== String(sender))
-                    .map(member => ({
-                        receiver: member.user_id,
+            const targetUsers = chapterMemberships
+                .filter(member => String(member.user_id) !== String(sender))
+                .map(member => member.user_id);
+
+            let notifications = [];
+
+            if (inapp) {
+                notifications = await Notification.insertMany(
+                    targetUsers.map(user_id => ({
+                        receiver: user_id,
                         sender,
                         header,
                         content,
                         read,
                         readAt
                     }))
-            );
+                );
+            }
             
-            const receivers = notifications.map(n => n.receiver);
-            sendPushNotification(receivers, header, content);
+            if (push) {
+                sendPushNotification(targetUsers, header, content);
+            }
+
+            if (email) {
+                const users = await User.find({ _id: { $in: targetUsers } }, 'email company_email');
+                const emails = users.map(u => u.email || u.company_email).filter(Boolean);
+                
+                if (emails.length > 0) {
+                    const mailOptions = {
+                        from: process.env.GMAIL,
+                        bcc: emails,
+                        subject: header,
+                        text: content
+                    };
+                    transporter.sendMail(mailOptions).catch(err => console.error("Email send error:", err));
+                }
+            }
             
             res.status(201).json({ message: "Bulk notifications created.", count: notifications.length });
         } catch (err) {
