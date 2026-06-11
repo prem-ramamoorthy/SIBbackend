@@ -3,6 +3,8 @@ import mongoose from "mongoose";
 import { Notification, Membership, User } from "../../schemas.mjs";
 import { createNotificationValidation, getNotificationsValidation, createbulkNotificationValidation, getNotificationByIdValidation, updateNotificationValidation, deleteNotificationValidation, createBulkNotificationwithoutSenderValidation } from "../../validators.mjs";
 import { handleValidationErrors, mapNamesToIds } from "../../middlewares.mjs";
+import { sendPushNotification } from "../../utils/fcmHelper.mjs";
+import transporter from '../Auth/transporter.mjs';
 
 const router = express.Router();
 
@@ -24,6 +26,7 @@ router.post(
             const { receiver, sender, header, content, read, readAt } = req.body;
             const notif = new Notification({ receiver, sender, header, content, read, readAt });
             await notif.save();
+            sendPushNotification([receiver], header, content);
             res.status(201).json(notif);
         } catch (err) {
             res.status(400).json({ error: err.message || "Failed to create notification" });
@@ -170,6 +173,10 @@ router.post(
                         readAt
                     }))
             );
+            
+            const receivers = notifications.map(n => n.receiver);
+            sendPushNotification(receivers, header, content);
+            
             res.status(201).json({ message: "Bulk notifications created.", count: notifications.length });
         } catch (err) {
             res.status(400).json({ error: err.message || "Failed to create notifications" });
@@ -190,6 +197,7 @@ router.post(
             const { receiver, sender, header, content, read, readAt } = req.body;
             const notif = new Notification({ receiver, sender, header, content, read, readAt });
             await notif.save();
+            sendPushNotification([receiver], header, content);
             res.status(201).json(notif);
         } catch (err) {
             res.status(400).json({ error: err.message || "Failed to create notification" });
@@ -220,6 +228,8 @@ router.post(
             }));
 
             const result = await Notification.insertMany(notificationsToInsert);
+            const receivers = result.map(n => n.receiver);
+            sendPushNotification(receivers, header, content);
             res.status(201).json({ message: "Notifications created successfully", count: result.length });
         } catch (err) {
             res.status(400).json({ error: err.message || "Failed to create notification" });
@@ -233,7 +243,7 @@ router.post(
     handleValidationErrors,
     async (req, res) => {
         try {
-            const { chapterids = [], header, content, read = false, readAt = null } = req.body;
+            const { chapterids = [], header, content, read = false, readAt = null, notifyInApp = true, notifyViaMail = false } = req.body;
             if (!Array.isArray(chapterids) || chapterids.length === 0) {
                 return res.status(400).json({ error: "chapterids must be a non-empty array." });
             }
@@ -253,20 +263,40 @@ router.post(
 
             const uniqueUserIds = [...new Set(chapterMemberships.map(m => String(m.user_id)))];
 
-            const notificationsToInsert = uniqueUserIds.map(user_id => ({
-                receiver: user_id,
-                sender,
-                header,
-                content,
-                read,
-                readAt
-            }));
+            let notifications = [];
 
-            const notifications = await Notification.insertMany(notificationsToInsert);
+            if (notifyInApp) {
+                const notificationsToInsert = uniqueUserIds.map(user_id => ({
+                    receiver: user_id,
+                    sender,
+                    header,
+                    content,
+                    read,
+                    readAt
+                }));
+
+                notifications = await Notification.insertMany(notificationsToInsert);
+                sendPushNotification(uniqueUserIds, header, content);
+            }
+
+            if (notifyViaMail) {
+                const users = await User.find({ _id: { $in: uniqueUserIds } }, 'email company_email');
+                const emails = users.map(u => u.email || u.company_email).filter(Boolean);
+                
+                if (emails.length > 0) {
+                    const mailOptions = {
+                        from: process.env.GMAIL,
+                        bcc: emails,
+                        subject: header,
+                        text: content
+                    };
+                    transporter.sendMail(mailOptions).catch(err => console.error("Email send error:", err));
+                }
+            }
 
             res.status(201).json({
-                message: "Bulk notifications created.",
-                count: notifications.length,
+                message: "Alert dispatched successfully.",
+                count: notifyInApp ? notifications.length : 0,
                 receivers: uniqueUserIds
             });
         } catch (err) {

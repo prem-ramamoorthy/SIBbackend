@@ -34,7 +34,15 @@ router.post(
         return res.status(400).json({ message: 'Both valid user_id and chapter_id are required.' });
       }
       const membership = new Membership(req.body);
-      membership.idno = `SIB${1000 + await Membership.countDocuments() + 10}`;
+      let nextIdnoNum = 1000 + await Membership.countDocuments() + 10;
+      const lastMembership = await Membership.findOne({ idno: { $exists: true } }).sort({ createdAt: -1 });
+      if (lastMembership && lastMembership.idno) {
+        const match = lastMembership.idno.match(/\d+/);
+        if (match) {
+          nextIdnoNum = parseInt(match[0], 10) + 1;
+        }
+      }
+      membership.idno = `SIB${nextIdnoNum}`;
       const saved = await membership.save();
       return res.status(201).json(saved);
 
@@ -67,7 +75,15 @@ router.post(
       }
 
       const membership = new Membership(req.body);
-      membership.idno = `SIB${1000 + await Membership.countDocuments() + 10}`;
+      let nextIdnoNum = 1000 + await Membership.countDocuments() + 10;
+      const lastMembership = await Membership.findOne({ idno: { $exists: true } }).sort({ createdAt: -1 });
+      if (lastMembership && lastMembership.idno) {
+        const match = lastMembership.idno.match(/\d+/);
+        if (match) {
+          nextIdnoNum = parseInt(match[0], 10) + 1;
+        }
+      }
+      membership.idno = `SIB${nextIdnoNum}`;
       const saved = await membership.save();
       return res.status(201).json(saved);
 

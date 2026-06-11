@@ -266,4 +266,38 @@ router.post('/upload/photo', upload.single('photo'), async (req, res) => {
   }
 });
 
+router.post("/register-fcm-token", authenticateCookie, async (req, res) => {
+  try {
+    const { fcmToken } = req.body;
+    if (!fcmToken) return res.status(400).json({ error: "Missing FCM token" });
+    const userId = req.user && req.user.uid;
+    if (!userId) return res.status(401).json({ error: "Unauthorized" });
+
+    await User.updateOne(
+      { user_id: userId },
+      { $addToSet: { fcmTokens: fcmToken } }
+    );
+    res.json({ message: "FCM token registered successfully" });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+router.post("/remove-fcm-token", authenticateCookie, async (req, res) => {
+  try {
+    const { fcmToken } = req.body;
+    if (!fcmToken) return res.status(400).json({ error: "Missing FCM token" });
+    const userId = req.user && req.user.uid;
+    if (!userId) return res.status(401).json({ error: "Unauthorized" });
+
+    await User.updateOne(
+      { user_id: userId },
+      { $pull: { fcmTokens: fcmToken } }
+    );
+    res.json({ message: "FCM token removed successfully" });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 export default router;
