@@ -513,4 +513,16 @@ Public.get('/getm2mslips', async (_, res) => {
   }
 });
 
+Public.get('/app-version', (req, res) => {
+  const minRequiredBuild = parseInt(process.env.MIN_REQUIRED_BUILD || "1", 10);
+  const minRequiredVersion = process.env.MIN_REQUIRED_VERSION || "1.0.0";
+  const playstoreUrl = process.env.PLAYSTORE_URL || "https://play.google.com/store/apps/details?id=com.senguntharinbusiness";
+  
+  res.status(200).json({
+    minRequiredBuild,
+    minRequiredVersion,
+    playstoreUrl
+  });
+});
+
 export default Public;
