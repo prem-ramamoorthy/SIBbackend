@@ -514,14 +514,27 @@ Public.get('/getm2mslips', async (_, res) => {
 });
 
 Public.get('/app-version', (req, res) => {
-  const minRequiredBuild = parseInt(process.env.MIN_REQUIRED_BUILD || "1", 10);
-  const minRequiredVersion = process.env.MIN_REQUIRED_VERSION || "1.0.0";
+  const iosMinRequiredBuild = parseInt(process.env.IOS_MIN_REQUIRED_BUILD || "1", 10);
+  const iosMinRequiredVersion = process.env.IOS_MIN_REQUIRED_VERSION || "1.0.0";
+  const androidMinRequiredBuild = parseInt(process.env.ANDROID_MIN_REQUIRED_BUILD || "1", 10);
+  const androidMinRequiredVersion = process.env.ANDROID_MIN_REQUIRED_VERSION || "1.0.0";
+  
+  // Keep legacy variables for backwards compatibility during rollout
+  const minRequiredBuild = androidMinRequiredBuild; 
+  const minRequiredVersion = androidMinRequiredVersion;
+
   const playstoreUrl = process.env.PLAYSTORE_URL || "https://play.google.com/store/apps/details?id=com.senguntharinbusiness";
+  const appstoreUrl = process.env.APPSTORE_URL || "https://apps.apple.com/app/sib/id__YOUR_APP_ID__";
   
   res.status(200).json({
+    iosMinRequiredBuild,
+    iosMinRequiredVersion,
+    androidMinRequiredBuild,
+    androidMinRequiredVersion,
     minRequiredBuild,
     minRequiredVersion,
-    playstoreUrl
+    playstoreUrl,
+    appstoreUrl
   });
 });
 

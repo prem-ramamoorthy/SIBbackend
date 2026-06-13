@@ -7,7 +7,7 @@ import { User } from "../schemas.mjs";
  * @param {String} title - Notification title
  * @param {String} body - Notification body
  */
-export const sendPushNotification = async (receiverIds, title, body) => {
+export const sendPushNotification = async (receiverIds, title, body, data = {}) => {
     try {
         if (!receiverIds || receiverIds.length === 0) return;
 
@@ -39,6 +39,14 @@ export const sendPushNotification = async (receiverIds, title, body) => {
                 notification: {
                     title,
                     body
+                },
+                data,
+                apns: {
+                    payload: {
+                        aps: {
+                            sound: 'default'
+                        }
+                    }
                 },
                 tokens: tokenBatch
             };

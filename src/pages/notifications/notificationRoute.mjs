@@ -23,10 +23,10 @@ router.post(
     handleValidationErrors,
     async (req, res) => {
         try {
-            const { receiver, sender, header, content, read, readAt } = req.body;
+            const { receiver, sender, header, content, read, readAt, data } = req.body;
             const notif = new Notification({ receiver, sender, header, content, read, readAt });
             await notif.save();
-            sendPushNotification([receiver], header, content);
+            sendPushNotification([receiver], header, content, data);
             res.status(201).json(notif);
         } catch (err) {
             res.status(400).json({ error: err.message || "Failed to create notification" });
