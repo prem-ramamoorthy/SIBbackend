@@ -343,4 +343,43 @@ router.post(
     }
 );
 
+// Personal Wish notification
+router.post("/send-personal-wish", async (req, res) => {
+    try {
+        const { receiverId, celebrationType = "special day" } = req.body;
+        if (!receiverId) return res.status(400).json({ error: "receiverId is required" });
+
+        const senderId = req.userid; 
+        let senderName = "A member";
+
+        if (senderId) {
+            const sender = await User.findById(senderId);
+            if (sender) {
+                senderName = sender.username;
+            }
+        }
+
+        const header = "🎉 Warm Wishes!";
+        const content = `✨ ${senderName} just sent you a warm wish for your ${celebrationType}!`;
+        const data = { action: "OPEN_WALL_OF_WISHES" };
+
+        const notif = new Notification({
+            receiver: receiverId,
+            sender: senderId,
+            header,
+            content,
+            read: false,
+            readAt: null
+        });
+
+        await notif.save();
+        await sendPushNotification([receiverId], header, content, data);
+
+        res.status(200).json({ message: "Wish sent successfully", notification: notif });
+    } catch (err) {
+        console.error("Error in /send-personal-wish:", err);
+        res.status(500).json({ error: err.message || "Failed to send wish" });
+    }
+});
+
 export default router;

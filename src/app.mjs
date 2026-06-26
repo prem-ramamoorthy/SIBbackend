@@ -8,6 +8,7 @@ import { fileURLToPath } from "url";
 
 import connectDB from "./utils/mongo_connection.mjs";
 import { authenticateCookie } from "./middlewares.mjs";
+import startCronJobs from "./utils/cronJobs.mjs";
 
 import authRoutes from "./pages/Auth/routes.mjs";
 import AdminRouter from "./pages/admin/AdminRoute.mjs";
@@ -26,6 +27,7 @@ import Galery from "./pages/galery/galeryRoute.mjs";
 dotenv.config();
 
 connectDB();
+startCronJobs();
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
