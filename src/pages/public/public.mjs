@@ -601,6 +601,8 @@ Public.get('/upcoming-celebrations', async (req, res) => {
         if (nextBirthday.getTime() <= futureLimit) {
           events.push({
             id: p._id.toString() + '-b',
+            profileId: p._id.toString(),
+            userId: p.user ? p.user._id.toString() : "",
             memberName: p.memberName,
             chapterName: p.chapterName,
             type: 'birthday',
@@ -621,6 +623,8 @@ Public.get('/upcoming-celebrations', async (req, res) => {
         if (nextAnniversary.getTime() <= futureLimit) {
           events.push({
             id: p._id.toString() + '-a',
+            profileId: p._id.toString(),
+            userId: p.user ? p.user._id.toString() : "",
             memberName: p.memberName,
             chapterName: p.chapterName,
             type: 'anniversary',
