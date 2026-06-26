@@ -538,4 +538,106 @@ Public.get('/app-version', (req, res) => {
   });
 });
 
+Public.get('/upcoming-celebrations', async (req, res) => {
+  try {
+    const pipeline = [
+      {
+        $match: {
+          $or: [
+            { dob: { $ne: null } },
+            { wedding_date: { $ne: null } }
+          ]
+        }
+      },
+      {
+        $lookup: {
+          from: 'users',
+          localField: 'user_id',
+          foreignField: '_id',
+          as: 'user'
+        }
+      },
+      { $unwind: { path: '$user', preserveNullAndEmptyArrays: true } },
+      {
+        $lookup: {
+          from: 'chapters',
+          localField: 'chapter_id',
+          foreignField: '_id',
+          as: 'chapter'
+        }
+      },
+      { $unwind: { path: '$chapter', preserveNullAndEmptyArrays: true } },
+      {
+        $project: {
+          _id: 1,
+          memberName: { $ifNull: ["$display_name", "$user.username"] },
+          profileImage: "$profile_image_url",
+          chapterName: "$chapter.chapter_name",
+          dob: 1,
+          wedding_date: 1
+        }
+      }
+    ];
+
+    const profiles = await MemberProfile.aggregate(pipeline);
+    
+    const events = [];
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const todayStart = new Date(currentYear, now.getMonth(), now.getDate()).getTime();
+    // Get celebrations for the next 30 days
+    const daysAhead = 30 * 24 * 60 * 60 * 1000;
+    const futureLimit = todayStart + daysAhead;
+
+    profiles.forEach(p => {
+      if (p.dob) {
+        const dobDate = new Date(p.dob);
+        let nextBirthday = new Date(currentYear, dobDate.getMonth(), dobDate.getDate());
+        
+        if (nextBirthday.getTime() < todayStart) {
+          nextBirthday = new Date(currentYear + 1, dobDate.getMonth(), dobDate.getDate());
+        }
+
+        if (nextBirthday.getTime() <= futureLimit) {
+          events.push({
+            id: p._id.toString() + '-b',
+            memberName: p.memberName,
+            chapterName: p.chapterName,
+            type: 'birthday',
+            profileImage: p.profileImage || "",
+            targetDate: nextBirthday.toISOString()
+          });
+        }
+      }
+
+      if (p.wedding_date) {
+        const weddingDate = new Date(p.wedding_date);
+        let nextAnniversary = new Date(currentYear, weddingDate.getMonth(), weddingDate.getDate());
+        
+        if (nextAnniversary.getTime() < todayStart) {
+          nextAnniversary = new Date(currentYear + 1, weddingDate.getMonth(), weddingDate.getDate());
+        }
+
+        if (nextAnniversary.getTime() <= futureLimit) {
+          events.push({
+            id: p._id.toString() + '-a',
+            memberName: p.memberName,
+            chapterName: p.chapterName,
+            type: 'anniversary',
+            profileImage: p.profileImage || "",
+            targetDate: nextAnniversary.toISOString()
+          });
+        }
+      }
+    });
+
+    events.sort((a, b) => new Date(a.targetDate).getTime() - new Date(b.targetDate).getTime());
+
+    res.status(200).json(events);
+  } catch (err) {
+    console.error('Error in /upcoming-celebrations:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 export default Public;

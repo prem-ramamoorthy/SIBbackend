@@ -5,6 +5,7 @@
     },
     "public": {
       "GET": [
+        "/upcoming-celebrations",
         "/getallprofiles",
         "/getallverticals",
         "/getallchapternames",
