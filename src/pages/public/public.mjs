@@ -573,6 +573,7 @@ Public.get('/upcoming-celebrations', async (req, res) => {
           memberName: { $ifNull: ["$display_name", "$user.username"] },
           profileImage: "$profile_image_url",
           chapterName: "$chapter.chapter_name",
+          userId: "$user._id",
           dob: 1,
           wedding_date: 1
         }
@@ -602,7 +603,7 @@ Public.get('/upcoming-celebrations', async (req, res) => {
           events.push({
             id: p._id.toString() + '-b',
             profileId: p._id.toString(),
-            userId: p.user ? p.user._id.toString() : "",
+            userId: p.userId ? p.userId.toString() : "",
             memberName: p.memberName,
             chapterName: p.chapterName,
             type: 'birthday',
@@ -624,7 +625,7 @@ Public.get('/upcoming-celebrations', async (req, res) => {
           events.push({
             id: p._id.toString() + '-a',
             profileId: p._id.toString(),
-            userId: p.user ? p.user._id.toString() : "",
+            userId: p.userId ? p.userId.toString() : "",
             memberName: p.memberName,
             chapterName: p.chapterName,
             type: 'anniversary',
