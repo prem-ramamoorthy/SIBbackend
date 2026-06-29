@@ -363,6 +363,21 @@ router.post("/send-personal-wish", async (req, res) => {
         const content = `✨ ${senderName} just sent you a warm wish for your ${celebrationType}!`;
         const data = { action: "OPEN_WALL_OF_WISHES" };
 
+        // Prevent spam: Check if sender already sent a wish to this receiver today
+        const todayStart = new Date();
+        todayStart.setHours(0, 0, 0, 0);
+
+        const existingWish = await Notification.findOne({
+            receiver: receiverId,
+            sender: senderId,
+            header: header,
+            createdAt: { $gte: todayStart }
+        });
+
+        if (existingWish) {
+            return res.status(429).json({ error: "You have already sent a wish to this member today." });
+        }
+
         const notif = new Notification({
             receiver: receiverId,
             sender: senderId,
